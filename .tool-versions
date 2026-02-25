@@ -1,0 +1,4 @@
+hadolint 2.14.0
+pre-commit 4.5.1
+python 3.14.2
+uv 0.9.25

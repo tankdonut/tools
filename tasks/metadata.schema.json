@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tools manifest",
+  "description": "Mapping of tool names (keys) to their metadata objects.",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "description": "Metadata for a single CLI tool or binary.",
+    "required": [
+      "description",
+      "download_url",
+      "license",
+      "repo_url",
+      "version"
+    ],
+    "properties": {
+      "description": {
+        "type": "string",
+        "description": "Human-readable summary of what the tool does."
+      },
+      "download_url": {
+        "type": "string",
+        "description": "Template URL used to download the tool's release artifact (may contain placeholders like {{version}} or {{os}})."
+      },
+      "license": {
+        "type": "string",
+        "description": "License identifier or text describing the tool's software license."
+      },
+      "repo_url": {
+        "type": "string",
+        "description": "URL of the tool's source code repository, typically on a hosting service like GitHub."
+      },
+      "version": {
+        "type": "string",
+        "description": "Version string of the tool to install or reference (e.g. semantic version)."
+      }
+    },
+    "additionalProperties": false
+  }
+}

@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=metadata.schema.json
+---
+{% for name, data in metadata.items() %}
+{{ name }}:
+  description: >
+    {{ data.description }}
+  download_url: >
+    {{ data.download_url }}
+  repo_url: {{ data.repo_url }}
+  license: {{ data.license }}
+  version: {{ data.version }}
+{% endfor %}

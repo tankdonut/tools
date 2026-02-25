@@ -1,0 +1,24 @@
+name: Cleanup Stale GHCR Images
+
+on:
+  workflow_dispatch: # Allows manual triggering
+  schedule:
+    - cron: "30 1 * * *" # Runs daily at 01:30 UTC
+
+env:
+  SEMVER_REGEX: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
+
+jobs:
+  cleanup-ghcr:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write # Required to delete images
+    steps:
+      - name: Cleanup Stale GHCR Images
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          package: ${{ github.event.repository.name }}
+          keep-n-tagged: 10
+          exclude-tags: v.*,latest,${{ github.event.repository.default_branch }},${{ env.SEMVER_REGEX }}
+          delete-untagged: true
+          use-regex: true

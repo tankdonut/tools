@@ -1,0 +1,42 @@
+name: container
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    env:
+      CONTAINER_REGISTRY: ghcr.io/${{ github.repository }}
+      CI: "true"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Sync Dependencies
+        run: uv sync
+
+      - name: Validate Metadata
+        run: uv run invoke update.update-all --dry-run || true
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and Push Container
+        run: uv run invoke build.container --push
