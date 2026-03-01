@@ -14,6 +14,15 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jsonschema import validate
 import requests
 import requests.exceptions
+from rich.console import Console
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
+)
 import semver
 import tenacity
 
@@ -208,26 +217,40 @@ def get_latest_github_release_version(owner: str, repo: str) -> str | None:
 
 
 def detect_updates(metadata: dict) -> list[dict]:
-    """Detect available package updates using parallel API calls."""
+    """Detect available package updates with progress tracking."""
+    console = Console()
     updates = []
 
-    # Use ThreadPoolExecutor for parallel API calls (max 10 concurrent)
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        # Submit all tasks
-        future_to_package = {
-            executor.submit(check_package_update, name, meta): name
-            for name, meta in metadata.items()
-        }
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeRemainingColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task("[green]Checking for updates...", total=len(metadata))
 
-        # Collect results as they complete
-        for future in as_completed(future_to_package):
-            try:
-                result = future.result(timeout=60)  # 60s timeout per package
-                if result:
-                    updates.append(result)
-            except Exception:
-                # Log error but continue with other packages
-                continue
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_package = {
+                executor.submit(check_package_update, name, meta): name
+                for name, meta in metadata.items()
+            }
+
+            for future in as_completed(future_to_package):
+                package_name = future_to_package[future]
+                try:
+                    result = future.result(timeout=60)  # 60s timeout per package
+                    if result:
+                        updates.append(result)
+                        console.print(
+                            f"  [green]✓[/green] {result['package']}: "
+                            f"{result['from_version']} → {result['to_version']}"
+                        )
+                except Exception:
+                    console.print(f"  [red]✗[/red] {package_name}: Failed to check")
+                finally:
+                    progress.update(task, advance=1)
 
     return updates
 
