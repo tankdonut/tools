@@ -26,7 +26,9 @@ from rich.progress import (
 import semver
 import tenacity
 
-from tasks.lib import METADATA_FILE, METADATA_SCHEMA_FILE, load_metadata
+from tasks.lib import METADATA_FILE, METADATA_SCHEMA_FILE, MetadataCache
+
+metadata_cache = MetadataCache()
 
 
 class AutomationError(Exception):
@@ -257,7 +259,7 @@ def detect_updates(metadata: dict) -> list[dict]:
 
 @task(aliases=["a", "all"])
 def update_all(c, dry_run: bool = False) -> None:
-    metadata = load_metadata()
+    metadata = metadata_cache.get()
     updates = detect_updates(metadata)
 
     if not updates:
@@ -272,13 +274,14 @@ def update_all(c, dry_run: bool = False) -> None:
         metadata[update["package"]]["version"] = update["to_version"]
 
     write_metadata(metadata)
+    metadata_cache.clear()
 
     print(json.dumps(updates, indent=2))
 
 
 @task(aliases=["p"])
 def package(c, name: str, dry_run: bool = False) -> None:
-    metadata = load_metadata()
+    metadata = metadata_cache.get()
 
     if name not in metadata:
         print(json.dumps([], indent=2))
@@ -297,6 +300,7 @@ def package(c, name: str, dry_run: bool = False) -> None:
 
     metadata[name]["version"] = updates[0]["to_version"]
     write_metadata(metadata)
+    metadata_cache.clear()
 
     print(json.dumps(updates, indent=2))
 
@@ -311,7 +315,7 @@ def add(
     name: str | None = None,
     dry_run: bool = False,
 ) -> None:
-    metadata = load_metadata()
+    metadata = metadata_cache.get()
 
     owner, repo = get_owner_and_repo(repo_url)
     if not owner or not repo:
@@ -348,6 +352,7 @@ def add(
         return
 
     write_metadata(metadata)
+    metadata_cache.clear()
 
     print(
         json.dumps(
@@ -371,7 +376,7 @@ def automation(c, ci: bool = False, dry_run: bool = False) -> None:
     - Enable auto-merge (CI only)
     """
 
-    metadata = load_metadata()
+    metadata = metadata_cache.get()
     updates = detect_updates(metadata)
 
     if not updates:
@@ -388,103 +393,100 @@ def automation(c, ci: bool = False, dry_run: bool = False) -> None:
         print(f"Would create PR targeting 'main' with {len(updates)} update(s).")
         return
 
-    for update in updates:
-        metadata[update["package"]]["version"] = update["to_version"]
+    with ensure_clean_checkout():
+        for update in updates:
+            metadata[update["package"]]["version"] = update["to_version"]
 
-    write_metadata(metadata)
+        write_metadata(metadata)
+        metadata_cache.clear()
 
-    # Checkout existing branch or create a new one
-    branch_exists = subprocess.run(
-        ["git", "branch", "--list", branch_name],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
+        # Checkout existing branch or create a new one
+        branch_exists = safe_git_command("branch", "--list", branch_name).stdout.strip()
 
-    if branch_exists:
-        subprocess.run(["git", "checkout", branch_name], check=True)
-    else:
-        subprocess.run(["git", "checkout", "-b", branch_name], check=True)
+        if branch_exists:
+            safe_git_command("checkout", branch_name)
+        else:
+            safe_git_command("checkout", "-b", branch_name)
 
-    subprocess.run(["git", "add", str(METADATA_FILE)], check=True)
-    subprocess.run(["git", "commit", "-m", "chore: update packages"], check=True)
-    subprocess.run(["git", "push", "-u", "origin", branch_name], check=True)
+        safe_git_command("add", str(METADATA_FILE))
+        safe_git_command("commit", "-m", "chore: update packages")
+        safe_git_command("push", "-u", "origin", branch_name)
 
-    count = len(updates)
+        count = len(updates)
 
-    if count <= 3:
-        parts = [f"{u['package']} ({u['from_version']} → {u['to_version']})" for u in updates]
-        title = f"chore: update {', '.join(parts)}"
-    else:
-        first = ", ".join(u["package"] for u in updates[:3])
-        title = f"chore: update {first} +{count - 3} more"
+        if count <= 3:
+            parts = [f"{u['package']} ({u['from_version']} → {u['to_version']})" for u in updates]
+            title = f"chore: update {', '.join(parts)}"
+        else:
+            first = ", ".join(u["package"] for u in updates[:3])
+            title = f"chore: update {first} +{count - 3} more"
 
-    pretty_json = json.dumps(updates, indent=2)
+        pretty_json = json.dumps(updates, indent=2)
 
-    body = (
-        "Automated weekly package updates.\n\n"
-        f"{count} package(s) updated.\n\n"
-        "<details>\n"
-        "<summary>Updated Packages (click to expand)</summary>\n\n"
-        "```json\n"
-        f"{pretty_json}\n"
-        "```\n\n"
-        "</details>"
-    )
+        body = (
+            "Automated weekly package updates.\n\n"
+            f"{count} package(s) updated.\n\n"
+            "<details>\n"
+            "<summary>Updated Packages (click to expand)</summary>\n\n"
+            "```json\n"
+            f"{pretty_json}\n"
+            "```\n\n"
+            "</details>"
+        )
 
-    # Check for existing open PR
-    pr_check = subprocess.run(
-        [
-            "gh",
-            "pr",
-            "list",
-            "--head",
-            branch_name,
-            "--state",
-            "open",
-            "--json",
-            "number,url",
-        ],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-
-    existing_prs = json.loads(pr_check.stdout) if pr_check.stdout.strip() else []
-
-    if existing_prs:
-        pr_number = str(existing_prs[0]["number"])
-        print(f"Reusing existing PR: {existing_prs[0]['url']}")
-    else:
-        subprocess.run(
+        # Check for existing open PR
+        pr_check = subprocess.run(
             [
                 "gh",
                 "pr",
-                "create",
-                "--title",
-                title,
-                "--body",
-                body,
+                "list",
                 "--head",
                 branch_name,
-                "--base",
-                "main",
+                "--state",
+                "open",
+                "--json",
+                "number,url",
             ],
+            capture_output=True,
+            text=True,
             check=True,
         )
-        pr_number = subprocess.check_output(
-            ["gh", "pr", "view", "--json", "number", "--jq", ".number"],
-            text=True,
-        ).strip()
 
-    # Add dependencies label (ignore failure if label does not exist)
-    subprocess.run(
-        ["gh", "pr", "edit", pr_number, "--add-label", "dependencies"],
-        check=False,
-    )
+        existing_prs = json.loads(pr_check.stdout) if pr_check.stdout.strip() else []
 
-    # Enable auto-merge (respects branch protection rules)
-    subprocess.run(
-        ["gh", "pr", "merge", pr_number, "--auto", "--squash"],
-        check=False,
-    )
+        if existing_prs:
+            pr_number = str(existing_prs[0]["number"])
+            print(f"Reusing existing PR: {existing_prs[0]['url']}")
+        else:
+            subprocess.run(
+                [
+                    "gh",
+                    "pr",
+                    "create",
+                    "--title",
+                    title,
+                    "--body",
+                    body,
+                    "--head",
+                    branch_name,
+                    "--base",
+                    "main",
+                ],
+                check=True,
+            )
+            pr_number = subprocess.check_output(
+                ["gh", "pr", "view", "--json", "number", "--jq", ".number"],
+                text=True,
+            ).strip()
+
+        # Add dependencies label (ignore failure if label does not exist)
+        subprocess.run(
+            ["gh", "pr", "edit", pr_number, "--add-label", "dependencies"],
+            check=False,
+        )
+
+        # Enable auto-merge (respects branch protection rules)
+        subprocess.run(
+            ["gh", "pr", "merge", pr_number, "--auto", "--squash"],
+            check=False,
+        )

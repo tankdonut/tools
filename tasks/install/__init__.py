@@ -6,7 +6,9 @@ from invoke.context import Context
 from invoke.tasks import task
 
 from tasks.install.download import PackageDownloader
-from tasks.lib import ROOT_DIR, load_metadata, render_template
+from tasks.lib import ROOT_DIR, MetadataCache, render_template
+
+metadata_cache = MetadataCache()
 
 load_dotenv()
 
@@ -23,7 +25,7 @@ def package(
     install_path: str | None = None,
 ) -> None:
     """Install a single package (defaults to dist/ or INSTALL_PATH)."""
-    metadata = load_metadata()
+    metadata = metadata_cache.get()
     package_metadata = metadata[name]
 
     download_url = render_template(name, package_metadata, package_metadata["download_url"])
@@ -54,14 +56,20 @@ def package(
 @task(aliases=["a", "all"])
 def all_packages(c: Context, dist: bool = True, force: bool = False) -> None:
     """Install all packages (defaults to dist/ or INSTALL_PATH)."""
-    metadata = load_metadata()
+    metadata = metadata_cache.get()
     for package_id in metadata:
         package(c, name=package_id, dist=dist, force=force)
+    metadata_cache.clear()
 
 
 @task
 def local(c: Context, name: str, force: bool = False) -> None:
     """Install a package to ~/.local/bin if available, else ~/bin."""
+    metadata = metadata_cache.get()
+
+    if name not in metadata:
+        raise ValueError(f"Package '{name}' not found in metadata")
+
     home = Path.home()
     local_bin = home / ".local" / "bin"
     fallback_bin = home / "bin"
@@ -93,6 +101,7 @@ def local(c: Context, name: str, force: bool = False) -> None:
 @task(aliases=["la"])
 def local_all(c: Context, force: bool = False) -> None:
     """Install all packages to ~/.local/bin if available, else ~/bin."""
-    metadata = load_metadata()
+    metadata = metadata_cache.get()
     for package_id in metadata:
         local(c, name=package_id, force=force)
+    metadata_cache.clear()

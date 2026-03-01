@@ -6,6 +6,8 @@ from typing import Any
 from jinja2 import BaseLoader, Environment
 import yaml
 
+_os_cache: str | None = None
+
 
 class MetadataCache:
     """Simple in-memory cache for metadata."""
@@ -94,15 +96,10 @@ def load_metadata() -> Any:
 
 
 def get_os() -> str:
-    return subprocess.check_output(["uname", "-s"], text=True).strip().lower()
-
-
-def get_arch() -> str:
-    return get_goarch()
-
-
-def get_rust_arch_name() -> str:
-    return get_rust_arch()
+    global _os_cache
+    if _os_cache is None:
+        _os_cache = subprocess.check_output(["uname", "-s"], text=True).strip().lower()
+    return _os_cache
 
 
 def render_template(package_id: str, package_metadata: dict[str, Any], template_str: str) -> str:
@@ -110,8 +107,8 @@ def render_template(package_id: str, package_metadata: dict[str, Any], template_
     template = env.from_string(template_str)
     result = template.render(
         os=get_os(),
-        arch=get_arch(),
-        rust_arch=get_rust_arch_name(),
+        arch=get_goarch(),
+        rust_arch=get_rust_arch(),
         name=package_id,
         **package_metadata,
     )
