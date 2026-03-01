@@ -106,7 +106,7 @@ class TestAutomationDryRun:
     """Test automation task dry-run mode."""
 
     @patch("tasks.update.subprocess.run")
-    @patch("tasks.update.load_metadata")
+    @patch("tasks.update.metadata_cache")
     @patch("tasks.update.detect_updates")
     @patch("pathlib.Path.read_bytes")
     @patch("pathlib.Path.exists")
@@ -115,7 +115,7 @@ class TestAutomationDryRun:
         mock_exists,
         mock_read_bytes,
         mock_detect,
-        mock_load,
+        mock_cache,
         mock_subprocess,
         temp_metadata_file,
     ):
@@ -125,10 +125,12 @@ class TestAutomationDryRun:
 
         mock_exists.return_value = True
         mock_read_bytes.return_value = b"test-content"
-        mock_load.return_value = {"test-pkg": {"version": "1.0.0"}}
-        mock_detect.return_value = [
-            {"package": "test-pkg", "from_version": "1.0.0", "to_version": "2.0.0"}
-        ]
+
+        updates_list = [{"package": "test-pkg", "from_version": "1.0.0", "to_version": "2.0.0"}]
+
+        mock_cache.get.return_value = {"test-pkg": {"version": "1.0.0"}}
+        mock_cache.clear = Mock()
+        mock_detect.return_value = updates_list
 
         # Mock git commands
         def mock_run_side_effect(*args, **kwargs):
@@ -150,7 +152,7 @@ class TestAutomationDryRun:
         assert not any("git" in git_call for git_call in git_calls)
 
     @patch("tasks.update.subprocess.run")
-    @patch("tasks.update.load_metadata")
+    @patch("tasks.update.metadata_cache")
     @patch("tasks.update.detect_updates")
     @patch("tasks.update.write_metadata")
     @patch("tasks.update.subprocess.check_output")
@@ -159,14 +161,15 @@ class TestAutomationDryRun:
         mock_check_output,
         mock_write,
         mock_detect,
-        mock_load,
+        mock_cache,
         mock_subprocess,
     ):
         """Test that dry-run does not write metadata."""
         from invoke.context import Context
         from tasks.update import automation
 
-        mock_load.return_value = {"test-pkg": {"version": "1.0.0"}}
+        mock_cache.get.return_value = {"test-pkg": {"version": "1.0.0"}}
+        mock_cache.clear = Mock()
         mock_detect.return_value = [
             {"package": "test-pkg", "from_version": "1.0.0", "to_version": "2.0.0"}
         ]
