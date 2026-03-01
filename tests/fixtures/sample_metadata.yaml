@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../tasks/metadata.schema.json
+---
+test-pkg1:
+  description: Test package 1
+  download_url: https://example.com/{{version}}/{{name}}.tar.gz
+  repo_url: https://github.com/test/repo1
+  license: MIT
+  version: 1.0.0
+
+test-pkg2:
+  description: Test package 2
+  download_url: https://github.com/test/repo2/releases/download/v{{version}}/{{name}}-{{os}}-{{arch}}
+  repo_url: git@github.com:test/repo2.git
+  license: APACHE-2.0
+  version: 2.0.0

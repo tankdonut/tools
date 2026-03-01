@@ -15,6 +15,15 @@ repos:
       - id: ruff
         args: ["--fix"]
 
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Run pytest
+        entry: uv run pytest tests/ -v --cov=tasks --cov-report=term-missing
+        language: system
+        pass_filenames: false
+        always_run: true
+
   - repo: https://github.com/hadolint/hadolint
     rev: v2.13.1-beta
     hooks:
