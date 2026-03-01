@@ -26,8 +26,11 @@ Keep changes easy to understand and easy to revert.
 
 - `uv run ruff check` - Run linting checks
 - `uv run ruff format --check` - Check formatting
-- `python scripts/test_update_automation_dry_run.py` - Run update automation tests
-- Individual tests: Run specific test files directly with `python`
+- `uv run pytest` - Run all tests with coverage
+- `uv run pytest tests/test_update.py` - Run specific test file
+- `uv run pytest -k test_name` - Run specific test by name
+- `uv run pytest --cov=tasks` - Generate coverage report
+- `uv run pytest --cov=tasks --cov-report=html` - Generate HTML coverage report
 
 ### Task Execution
 
@@ -109,7 +112,15 @@ Unfixable: F401 (unused imports - only fix in nox/editor context)
 
 - Run relevant tests after making changes.
 - Update tests only when behavior intentionally changes.
-- Avoid introducing a test framework unless requested.
+- Aim for 80% code coverage.
+- Tests run automatically in pre-commit hooks.
+
+### Test Development
+
+- Write tests in `tests/` directory following pytest conventions.
+- Use fixtures from `conftest.py` for common test setup.
+- Mock external dependencies (GitHub API, subprocess, file I/O).
+- Use descriptive test names that explain what is being tested.
 
 ---
 

@@ -1,18 +1,50 @@
-from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
+from datetime import UTC, datetime
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
+import time
 from urllib.parse import urlparse
 
 from invoke.tasks import task
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jsonschema import validate
 import requests
+import requests.exceptions
+from rich.console import Console
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
+)
 import semver
+import tenacity
 
 from tasks.lib import METADATA_FILE, METADATA_SCHEMA_FILE, load_metadata
+
+
+class AutomationError(Exception):
+    """Base exception for automation errors."""
+
+
+class GitHubRateLimitError(AutomationError):
+    """GitHub API rate limit exceeded."""
+
+
+class GitOperationError(AutomationError):
+    """Git operation failed."""
+
+    def __init__(self, command: tuple[str, ...] | list[str], stderr: str):
+        self.command = command
+        self.stderr = stderr
+        super().__init__(f"Git command failed: {' '.join(command)}\n{stderr}")
+
 
 TEMPLATE_DIR = Path(METADATA_FILE).parent
 TEMPLATE_NAME = "metadata.yaml.j2"
@@ -25,6 +57,35 @@ env = Environment(
 )
 
 template = env.get_template(TEMPLATE_NAME)
+
+
+def safe_git_command(*args: str, check: bool = True) -> subprocess.CompletedProcess:
+    """Run git command with proper error handling."""
+    try:
+        return subprocess.run(
+            ["git"] + list(args),
+            capture_output=True,
+            text=True,
+            check=check,
+        )
+    except subprocess.CalledProcessError as e:
+        raise GitOperationError(args, e.stderr) from e
+
+
+@contextmanager
+def ensure_clean_checkout():
+    """Ensure we return to original git branch after operations."""
+    try:
+        result = safe_git_command("rev-parse", "--abbrev-ref", "HEAD")
+        original_branch = result.stdout.strip()
+    except GitOperationError:
+        original_branch = None
+
+    try:
+        yield
+    finally:
+        if original_branch:
+            safe_git_command("checkout", original_branch, check=False)
 
 
 def load_metadata_schema() -> dict:
@@ -49,6 +110,45 @@ def write_metadata(metadata: dict) -> None:
     METADATA_FILE.write_text(rendered, encoding="utf-8")
 
 
+def check_package_update(name: str, package_metadata: dict) -> dict | None:
+    """Check a single package for updates."""
+    current_version = package_metadata.get("version")
+    repo_url = package_metadata.get("repo_url")
+
+    if not current_version or not repo_url:
+        return None
+
+    owner, repo = get_owner_and_repo(repo_url)
+    if not owner or not repo:
+        return None
+
+    try:
+        latest_tag = get_latest_github_release_version(owner, repo)
+    except Exception:
+        return None
+
+    if not latest_tag:
+        return None
+
+    match = re.search(r"v?(\d+\.\d+\.\d+)", latest_tag)
+    if not match:
+        return None
+
+    latest_version = match.group(1)
+
+    try:
+        if semver.Version.parse(current_version) < semver.Version.parse(latest_version):
+            return {
+                "package": name,
+                "from_version": current_version,
+                "to_version": latest_version,
+            }
+    except ValueError:
+        return None
+
+    return None
+
+
 def get_owner_and_repo(url: str):
     if url.startswith("git@"):
         try:
@@ -70,7 +170,13 @@ def get_owner_and_repo(url: str):
         return None, None
 
 
+@tenacity.retry(
+    stop=tenacity.stop_after_attempt(3),
+    wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
+    retry=tenacity.retry_if_exception_type((requests.exceptions.Timeout, GitHubRateLimitError)),
+)
 def get_latest_github_release_version(owner: str, repo: str) -> str | None:
+    """Get latest GitHub release version with retry logic."""
     if not owner or not repo:
         return None
 
@@ -84,7 +190,25 @@ def get_latest_github_release_version(owner: str, repo: str) -> str | None:
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
-    response = requests.get(url, headers=headers, timeout=10)
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+    except requests.exceptions.Timeout:
+        raise  # Will trigger retry
+
+    if response.status_code == 403:
+        # Rate limited
+        remaining = int(response.headers.get("X-RateLimit-Remaining", 0))
+        if remaining == 0:
+            reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
+            wait_time = max(2, reset_time - time.time())
+            raise GitHubRateLimitError(
+                f"Rate limited. Resets in {wait_time} seconds. Set GITHUB_TOKEN for higher limits."
+            )
+        return None
+
+    if response.status_code == 429:
+        raise GitHubRateLimitError("Too many requests")
+
     if response.status_code != 200:
         return None
 
@@ -93,34 +217,40 @@ def get_latest_github_release_version(owner: str, repo: str) -> str | None:
 
 
 def detect_updates(metadata: dict) -> list[dict]:
+    """Detect available package updates with progress tracking."""
+    console = Console()
     updates = []
 
-    for name, package_metadata in metadata.items():
-        current_version = package_metadata.get("version")
-        repo_url = package_metadata.get("repo_url")
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeRemainingColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task("[green]Checking for updates...", total=len(metadata))
 
-        owner, repo = get_owner_and_repo(repo_url)
-        if not owner or not repo:
-            continue
-        latest_tag = get_latest_github_release_version(owner, repo)
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_package = {
+                executor.submit(check_package_update, name, meta): name
+                for name, meta in metadata.items()
+            }
 
-        match = re.search(r"v?(\d+\.\d+\.\d+)", latest_tag or "")
-        if not match:
-            continue
-
-        latest_version = match.group(1)
-
-        try:
-            if semver.compare(current_version, latest_version) == -1:
-                updates.append(
-                    {
-                        "package": name,
-                        "from_version": current_version,
-                        "to_version": latest_version,
-                    }
-                )
-        except ValueError:
-            continue
+            for future in as_completed(future_to_package):
+                package_name = future_to_package[future]
+                try:
+                    result = future.result(timeout=60)  # 60s timeout per package
+                    if result:
+                        updates.append(result)
+                        console.print(
+                            f"  [green]✓[/green] {result['package']}: "
+                            f"{result['from_version']} → {result['to_version']}"
+                        )
+                except Exception:
+                    console.print(f"  [red]✗[/red] {package_name}: Failed to check")
+                finally:
+                    progress.update(task, advance=1)
 
     return updates
 
@@ -248,7 +378,7 @@ def automation(c, ci: bool = False, dry_run: bool = False) -> None:
         print("No updates found.")
         return
 
-    branch_name = f"automation/update-{datetime.utcnow().strftime('%Y%m%d')}"
+    branch_name = f"automation/update-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}"
 
     if dry_run:
         print("Dry run mode enabled.")

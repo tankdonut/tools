@@ -1,6 +1,6 @@
 import tempfile
 
-from invoke import Context
+from invoke.context import Context
 
 
 class PackageDownloader:

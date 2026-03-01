@@ -1,9 +1,6 @@
-from invoke import Collection
+from invoke.collection import Collection
 
-import build
-import install
-import test
-import update
+from tasks import build, install, test, update
 
 ns = Collection()
 ns.add_collection(Collection.from_module(build))

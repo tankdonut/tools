@@ -7,6 +7,28 @@ from jinja2 import BaseLoader, Environment
 import yaml
 
 
+class MetadataCache:
+    """Simple in-memory cache for metadata."""
+
+    _instance = None
+    _metadata: dict | None = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def get(self) -> Any:
+        """Get cached metadata or load it."""
+        if self._metadata is None:
+            self._metadata = load_metadata()
+        return self._metadata
+
+    def clear(self) -> None:
+        """Clear cache."""
+        self._metadata = None
+
+
 def get_goarch():
     arch = platform.machine().lower()
 
