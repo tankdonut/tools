@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [tool.ruff]
-line-length = 99
+line-length = 100
 src = ["tasks"]
 # Ruff will automatically exclude all files listed in .gitignore as well as common temporary Python
 # tool directories.
