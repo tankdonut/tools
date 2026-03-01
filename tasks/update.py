@@ -21,6 +21,7 @@ from rich.progress import (
     SpinnerColumn,
     TaskProgressColumn,
     TextColumn,
+    TimeElapsedColumn,
     TimeRemainingColumn,
 )
 import semver
@@ -228,6 +229,7 @@ def detect_updates(metadata: dict) -> list[dict]:
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TaskProgressColumn(),
+        TimeElapsedColumn(),
         TimeRemainingColumn(),
         console=console,
     ) as progress:

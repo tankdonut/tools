@@ -78,3 +78,11 @@ addopts = [
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
+
+[tool.pyright]
+include = ["tasks", "tests"]
+exclude = ["**/__pycache__", "**/node_modules"]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
