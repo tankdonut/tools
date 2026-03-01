@@ -263,12 +263,10 @@ def update_all(c, dry_run: bool = False) -> None:
     updates = detect_updates(metadata)
 
     if not updates:
-        print(json.dumps([], indent=2))
         return
 
     if dry_run:
-        print(json.dumps(updates, indent=2))
-        raise SystemExit(1)
+        return
 
     for update in updates:
         metadata[update["package"]]["version"] = update["to_version"]
@@ -276,33 +274,26 @@ def update_all(c, dry_run: bool = False) -> None:
     write_metadata(metadata)
     metadata_cache.clear()
 
-    print(json.dumps(updates, indent=2))
-
 
 @task(aliases=["p"])
 def package(c, name: str, dry_run: bool = False) -> None:
     metadata = metadata_cache.get()
 
     if name not in metadata:
-        print(json.dumps([], indent=2))
         return
 
     single = {name: metadata[name]}
     updates = detect_updates(single)
 
     if not updates:
-        print(json.dumps([], indent=2))
         return
 
     if dry_run:
-        print(json.dumps(updates, indent=2))
-        raise SystemExit(1)
+        return
 
     metadata[name]["version"] = updates[0]["to_version"]
     write_metadata(metadata)
     metadata_cache.clear()
-
-    print(json.dumps(updates, indent=2))
 
 
 @task
@@ -348,21 +339,10 @@ def add(
     metadata = dict(sorted(metadata.items(), key=lambda item: item[0]))
 
     if dry_run:
-        print(json.dumps({package_name: metadata[package_name]}, indent=2))
         return
 
     write_metadata(metadata)
     metadata_cache.clear()
-
-    print(
-        json.dumps(
-            {
-                "package": package_name,
-                "version": version,
-            },
-            indent=2,
-        )
-    )
 
 
 @task
@@ -387,7 +367,6 @@ def automation(c, ci: bool = False, dry_run: bool = False) -> None:
 
     if dry_run:
         print("Dry run mode enabled.")
-        print(json.dumps(updates, indent=2))
         print(f"Would create branch: {branch_name}")
         print("Would commit: chore: update packages")
         print(f"Would create PR targeting 'main' with {len(updates)} update(s).")
