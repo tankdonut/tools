@@ -9,7 +9,7 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.3.1
+  version: 3.3.2
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -29,7 +29,7 @@ bd:
 
   repo_url: https://github.com/steveyegge/beads
   license: MIT
-  version: 0.55.4
+  version: 0.57.0
 cr:
   description: >
     CLI tool for linting and testing Helm charts
@@ -69,7 +69,7 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.150.0
+  version: 1.151.0
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -89,7 +89,7 @@ flux:
 
   repo_url: https://github.com/fluxcd/flux2
   license: APACHE-2.0
-  version: 2.7.5
+  version: 2.8.1
 helm-docs:
   description: >
     A tool for automatically generating markdown documentation for helm charts
@@ -123,8 +123,10 @@ k3s:
 k9s:
   description: >
     🐶 Kubernetes CLI To Manage Your Clusters In Style!
+
   download_url: >
     {{repo_url}}/releases/download/v{{version}}/k9s_Linux_{{arch}}.tar.gz
+
   repo_url: https://github.com/derailed/k9s
   license: APACHE-2.0
   version: 0.50.18
@@ -157,7 +159,7 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.2.10
+  version: 1.2.15
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -217,7 +219,7 @@ terraform:
 
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
-  version: 1.14.5
+  version: 1.14.6
 terraform-docs:
   description: >
     Generate docs from terraform modules
