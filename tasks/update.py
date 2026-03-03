@@ -261,6 +261,7 @@ def detect_updates(metadata: dict) -> list[dict]:
 
 @task(aliases=["a", "all"])
 def update_all(c, dry_run: bool = False) -> None:
+    """Check and update all tools."""
     metadata = metadata_cache.get()
     updates = detect_updates(metadata)
 
@@ -279,6 +280,7 @@ def update_all(c, dry_run: bool = False) -> None:
 
 @task(aliases=["p"])
 def package(c, name: str, dry_run: bool = False) -> None:
+    """Check and update single package."""
     metadata = metadata_cache.get()
 
     if name not in metadata:
@@ -308,6 +310,7 @@ def add(
     name: str | None = None,
     dry_run: bool = False,
 ) -> None:
+    """Add new package to metadata."""
     metadata = metadata_cache.get()
 
     owner, repo = get_owner_and_repo(repo_url)
@@ -349,14 +352,7 @@ def add(
 
 @task
 def automation(c, ci: bool = False, dry_run: bool = False) -> None:
-    """
-    Run full update automation:
-    - Run update.update-all
-    - Create branch
-    - Commit metadata
-    - Create PR
-    - Enable auto-merge (CI only)
-    """
+    """Run full update automation with PR creation and auto-merge."""
 
     metadata = metadata_cache.get()
     updates = detect_updates(metadata)
@@ -370,7 +366,7 @@ def automation(c, ci: bool = False, dry_run: bool = False) -> None:
     if dry_run:
         print("Dry run mode enabled.")
         print(f"Would create branch: {branch_name}")
-        print("Would commit: chore: update packages")
+        print("Would commit: chore: update tools")
         print(f"Would create PR targeting 'main' with {len(updates)} update(s).")
         return
 
@@ -390,7 +386,7 @@ def automation(c, ci: bool = False, dry_run: bool = False) -> None:
             safe_git_command("checkout", "-b", branch_name)
 
         safe_git_command("add", str(METADATA_FILE))
-        safe_git_command("commit", "-m", "chore: update packages")
+        safe_git_command("commit", "-m", "chore: update tools")
         safe_git_command("push", "-u", "origin", branch_name)
 
         count = len(updates)

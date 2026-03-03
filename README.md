@@ -26,16 +26,40 @@ uv run inv --list
 
 ## Install Tools
 
-Install all tools:
+Install all tools to dist (default):
 
 ```bash
-uv run inv install.all
+uv run inv install
 ```
 
-Install a single tool:
+Install a single tool to dist:
 
 ```bash
-uv run inv install.package --name <package>
+uv run inv install --name <tool>
+```
+
+Install all tools to ~/.local/bin (or ~/bin):
+
+```bash
+uv run inv install --local
+```
+
+Install a single tool to ~/.local/bin:
+
+```bash
+uv run inv install --name <tool> --local
+```
+
+Force reinstall all tools:
+
+```bash
+uv run inv install --force
+```
+
+Force reinstall a single tool:
+
+```bash
+uv run inv install --name <tool> --force
 ```
 
 These tasks:
@@ -58,10 +82,10 @@ uv run inv update.add \
 
 Optional:
 
-- `--name` Override the inferred package name
+- `--name` Override the inferred tool name
 - `--dry-run` Preview the generated entry without writing changes
 
-The command will fail if the package name already exists.
+The command will fail if the tool name already exists.
 
 ## Adding a New Tool
 
@@ -80,7 +104,7 @@ This task:
 
 The `download_url` field is rendered using Jinja. Common variables:
 
-- `{{name}}` The package name
+- `{{name}}` The tool name
 - `{{version}}` Resolved semantic version
 - `{{repo_url}}` Repository URL from metadata
 - `{{os}}` Target operating system
@@ -97,10 +121,10 @@ To update all tools to their latest GitHub release:
 uv run inv update.update-all
 ```
 
-To update a single package:
+To update a single tool:
 
 ```bash
-uv run inv update.package --name <package>
+uv run inv update.package --name <tool>
 ```
 
 To preview updates without writing changes:

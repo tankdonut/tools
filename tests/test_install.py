@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from tasks.install.download import PackageDownloader
+from tasks.lib import PackageDownloader
 
 
 class TestPackageDownloader:
