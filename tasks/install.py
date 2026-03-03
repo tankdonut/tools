@@ -56,11 +56,11 @@ def install_single_package(
     install_path: Path,
     force: bool = False,
 ) -> None:
-    """Install a single package."""
+    """Install a single tool."""
     metadata = metadata_cache.get()
 
     if name not in metadata:
-        raise ValueError(f"Package '{name}' not found in metadata")
+        raise ValueError(f"Tool '{name}' not found in metadata")
 
     package_metadata = metadata[name]
     download_url = render_template(name, package_metadata, package_metadata["download_url"])
@@ -96,7 +96,7 @@ def install(
     dist: bool = True,
     force: bool = False,
 ) -> None:
-    """Install packages to dist or local."""
+    """Install tools to dist or local."""
     install_path = resolve_install_path(local=local, dist=dist)
 
     if name:
