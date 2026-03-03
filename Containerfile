@@ -12,7 +12,7 @@ WORKDIR /packages
 RUN pip install --no-cache-dir uv=="$(awk '/^uv/ {print $2}' .tool-versions)"
 
 # hadolint ignore=DL3059
-RUN uv run invoke install.all
+RUN uv run invoke install
 
 WORKDIR /packages/dist
 
