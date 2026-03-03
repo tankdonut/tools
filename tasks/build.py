@@ -55,6 +55,7 @@ def container(
     tag: str | None = None,
     push: bool = False,
 ) -> None:
+    """Build container image with configurable registry and tag."""
     registry = resolve_registry(registry)
     tag = resolve_tag(tag)
 
