@@ -26,16 +26,40 @@ uv run inv --list
 
 ## Install Tools
 
-Install all tools:
+Install all tools to dist (default):
 
 ```bash
-uv run inv install.all
+uv run inv install
 ```
 
-Install a single tool:
+Install a single tool to dist:
 
 ```bash
-uv run inv install.package --name <package>
+uv run inv install --name <package>
+```
+
+Install all tools to ~/.local/bin (or ~/bin):
+
+```bash
+uv run inv install --local
+```
+
+Install a single tool to ~/.local/bin:
+
+```bash
+uv run inv install --name <package> --local
+```
+
+Force reinstall all tools:
+
+```bash
+uv run inv install --force
+```
+
+Force reinstall a single tool:
+
+```bash
+uv run inv install --name <package> --force
 ```
 
 These tasks:
