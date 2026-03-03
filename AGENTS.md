@@ -34,8 +34,11 @@ Keep changes easy to understand and easy to revert.
 
 ### Task Execution
 
-- `uv run inv install.all` - Install all tools
-- `uv run inv install.package --name <package>` - Install single tool
+- `uv run inv install --name <package> --dist` - Install single package to dist
+- `uv run inv install --local` - Install all packages to ~/.local/bin (or ~/bin)
+- `uv run inv install --name <package> --local` - Install single package to ~/.local/bin
+- `uv run inv install --force` - Force reinstall all packages
+- `uv run inv install --name <package> --force` - Force reinstall single package
 - `uv run inv update.update-all` - Update all tools to latest releases
 - `uv run inv update.package --name <package>` - Update single package
 
