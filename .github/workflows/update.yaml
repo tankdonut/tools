@@ -15,15 +15,12 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - uses: actions/setup-python@v6
-        with:
-          python-version: "3.x"
 
       - run: pip install uv
 
@@ -37,4 +34,4 @@ jobs:
       - name: Run Update Automation
         run: uv run invoke update.automation --ci
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
