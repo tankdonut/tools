@@ -1,4 +1,4 @@
-name: container
+name: Container
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ permissions:
   packages: write
 
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
     env:
       CONTAINER_REGISTRY: ghcr.io/${{ github.repository }}
@@ -23,8 +23,6 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v6
-        with:
-          python-version: "3.x"
 
       - name: Install uv
         run: pip install uv
