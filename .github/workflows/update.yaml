@@ -1,4 +1,4 @@
-name: Update Package Versions
+name: Automation
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  update:
+  update-tool-versions:
     runs-on: ubuntu-latest
     permissions:
       contents: write
