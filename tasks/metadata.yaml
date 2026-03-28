@@ -29,7 +29,7 @@ bd:
 
   repo_url: https://github.com/steveyegge/beads
   license: MIT
-  version: 0.61.0
+  version: 0.62.0
 cr:
   description: >
     CLI tool for linting and testing Helm charts
@@ -189,7 +189,7 @@ skaffold:
 
   repo_url: https://github.com/GoogleContainerTools/skaffold
   license: APACHE-2.0
-  version: 2.18.0
+  version: 2.18.1
 solc:
   description: >
     Solidity, the Smart Contract Programming Language
