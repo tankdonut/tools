@@ -124,7 +124,6 @@ def check_package_update(name: str, package_metadata: dict) -> dict | None:
         - dict with skip info if release is too young
         - None if no update available or error
     """
-    console = Console()
     current_version = package_metadata.get("version")
     repo_url = package_metadata.get("repo_url")
     if not current_version or not repo_url:
@@ -144,10 +143,6 @@ def check_package_update(name: str, package_metadata: dict) -> dict | None:
             published_date = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
             age_days = (datetime.now(UTC) - published_date).days
             if age_days < RELEASE_AGE_DAYS:
-                console.print(
-                    f"[yellow]⏭[/yellow] {name}: {latest_tag} "
-                    f"skipped ({age_days} days old, < {RELEASE_AGE_DAYS} days)"
-                )
                 return {
                     "package": name,
                     "current_version": current_version,
@@ -290,6 +285,11 @@ def detect_updates(metadata: dict) -> tuple[list[dict], list[dict]]:
                     console.print(f"  [red]✗[/red] {package_name}: Failed to check")
                 finally:
                     progress.update(task, advance=1)
+
+    for s in skipped:
+        console.print(
+            f"[yellow]⏭[/yellow] {s['package']}: v{s['skipped_version']} skipped - {s['reason']}"
+        )
 
     return updates, skipped
 
