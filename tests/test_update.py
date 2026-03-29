@@ -9,8 +9,8 @@ class TestDetectUpdates:
     @patch("tasks.update.get_latest_github_release_version")
     def test_detect_updates_found(self, mock_latest, sample_metadata):
         """Test detecting updates when newer versions exist."""
-        mock_latest.side_effect = ["v2.1.0", "v3.0.0"]
-        updates = detect_updates(sample_metadata)
+        mock_latest.side_effect = [("v2.1.0", None), ("v3.0.0", None)]
+        updates, _skipped = detect_updates(sample_metadata)
 
         assert len(updates) == 2
         assert updates[0]["package"] == "test-pkg1"
@@ -20,16 +20,16 @@ class TestDetectUpdates:
     @patch("tasks.update.get_latest_github_release_version")
     def test_detect_updates_none_found(self, mock_latest, sample_metadata):
         """Test when no updates are available."""
-        mock_latest.side_effect = ["v1.0.0", "v2.0.0"]
-        updates = detect_updates(sample_metadata)
+        mock_latest.side_effect = [("v1.0.0", None), ("v2.0.0", None)]
+        updates, _skipped = detect_updates(sample_metadata)
 
         assert len(updates) == 0
 
     @patch("tasks.update.get_latest_github_release_version")
     def test_detect_updates_invalid_version(self, mock_latest, sample_metadata):
         """Test handling of invalid version tags."""
-        mock_latest.side_effect = ["invalid-tag", "v3.0.0"]
-        updates = detect_updates(sample_metadata)
+        mock_latest.side_effect = [("invalid-tag", None), ("v3.0.0", None)]
+        updates, _skipped = detect_updates(sample_metadata)
 
         assert len(updates) == 1
 
@@ -70,11 +70,11 @@ class TestGetLatestGitHubReleaseVersion:
         """Test successful API call."""
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"tag_name": "v1.2.3"}
+        mock_response.json.return_value = {"tag_name": "v1.2.3", "published_at": None}
         mock_get.return_value = mock_response
 
         version = get_latest_github_release_version("test", "repo")
-        assert version == "v1.2.3"
+        assert version == ("v1.2.3", None)
 
     @patch("tasks.update.requests.get")
     def test_with_auth_token(self, mock_get, monkeypatch):
@@ -82,7 +82,7 @@ class TestGetLatestGitHubReleaseVersion:
         monkeypatch.setenv("GITHUB_TOKEN", "test-token")
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"tag_name": "v1.2.3"}
+        mock_response.json.return_value = {"tag_name": "v1.2.3", "published_at": None}
         mock_get.return_value = mock_response
 
         get_latest_github_release_version("test", "repo")
@@ -99,7 +99,7 @@ class TestGetLatestGitHubReleaseVersion:
         mock_get.return_value = mock_response
 
         version = get_latest_github_release_version("test", "repo")
-        assert version is None
+        assert version == (None, None)
 
 
 class TestAutomationDryRun:
@@ -130,7 +130,7 @@ class TestAutomationDryRun:
 
         mock_cache.get.return_value = {"test-pkg": {"version": "1.0.0"}}
         mock_cache.clear = Mock()
-        mock_detect.return_value = updates_list
+        mock_detect.return_value = (updates_list, [])
 
         # Mock git commands
         def mock_run_side_effect(*args, **kwargs):
@@ -170,9 +170,10 @@ class TestAutomationDryRun:
 
         mock_cache.get.return_value = {"test-pkg": {"version": "1.0.0"}}
         mock_cache.clear = Mock()
-        mock_detect.return_value = [
-            {"package": "test-pkg", "from_version": "1.0.0", "to_version": "2.0.0"}
-        ]
+        mock_detect.return_value = (
+            [{"package": "test-pkg", "from_version": "1.0.0", "to_version": "2.0.0"}],
+            [],
+        )
 
         def mock_run_side_effect(*args, **kwargs):
             if "rev-parse" in str(args):
@@ -188,3 +189,93 @@ class TestAutomationDryRun:
 
         # Verify write_metadata was not called
         mock_write.assert_not_called()
+
+
+class TestReleaseAgeFilter:
+    """Test release age filtering for updates."""
+
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_release_6_days_old_is_skipped(self, mock_latest):
+        """Test that releases younger than 7 days are skipped."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        # Mock a release published 6 days ago
+        six_days_ago = datetime.now(UTC) - timedelta(days=6)
+        published_at = six_days_ago.isoformat()
+        mock_latest.return_value = ("v2.0.0", published_at)
+
+        # Current version is 1.0.0, latest is 2.0.0 but only 6 days old
+        metadata = {"test-pkg": {"version": "1.0.0", "repo_url": "https://github.com/test/repo"}}
+
+        result = check_package_update("test-pkg", metadata["test-pkg"])
+
+        # Should return skip info because release is too young (< 7 days)
+        assert result is not None
+        assert "skipped_version" in result
+        assert result["skipped_version"] == "v2.0.0"
+        assert result["package"] == "test-pkg"
+        assert "too young" in result["reason"]
+
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_release_exactly_7_days_old_is_not_skipped(self, mock_latest):
+        """Test that releases exactly 7 days old are NOT skipped."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        # Mock a release published exactly 7 days ago
+        seven_days_ago = datetime.now(UTC) - timedelta(days=7)
+        published_at = seven_days_ago.isoformat()
+        mock_latest.return_value = ("v2.0.0", published_at)
+
+        metadata = {"test-pkg": {"version": "1.0.0", "repo_url": "https://github.com/test/repo"}}
+
+        result = check_package_update("test-pkg", metadata["test-pkg"])
+
+        # Should NOT be skipped - 7 days is the threshold
+        assert result is not None
+        assert result["package"] == "test-pkg"
+        assert result["from_version"] == "1.0.0"
+        assert result["to_version"] == "2.0.0"
+
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_release_8_days_old_is_not_skipped(self, mock_latest):
+        """Test that releases older than 7 days are NOT skipped."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        # Mock a release published 8 days ago
+        eight_days_ago = datetime.now(UTC) - timedelta(days=8)
+        published_at = eight_days_ago.isoformat()
+        mock_latest.return_value = ("v2.0.0", published_at)
+
+        metadata = {"test-pkg": {"version": "1.0.0", "repo_url": "https://github.com/test/repo"}}
+
+        result = check_package_update("test-pkg", metadata["test-pkg"])
+
+        # Should NOT be skipped - release is old enough
+        assert result is not None
+        assert result["package"] == "test-pkg"
+        assert result["from_version"] == "1.0.0"
+        assert result["to_version"] == "2.0.0"
+
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_release_without_published_at_is_not_skipped(self, mock_latest):
+        """Test that releases without published_at are NOT skipped (defensive)."""
+        from tasks.update import check_package_update
+
+        # Mock a release with no published_at (None)
+        mock_latest.return_value = ("v2.0.0", None)
+
+        metadata = {"test-pkg": {"version": "1.0.0", "repo_url": "https://github.com/test/repo"}}
+
+        result = check_package_update("test-pkg", metadata["test-pkg"])
+
+        # Should NOT be skipped - defensive: if no date, allow update
+        assert result is not None
+        assert result["package"] == "test-pkg"
+        assert result["from_version"] == "1.0.0"
+        assert result["to_version"] == "2.0.0"

@@ -29,6 +29,9 @@ import tenacity
 
 from tasks.lib import METADATA_FILE, METADATA_SCHEMA_FILE, MetadataCache
 
+# Minimum age in days before a release can be used for updates
+RELEASE_AGE_DAYS = 7
+
 metadata_cache = MetadataCache()
 
 
@@ -114,31 +117,49 @@ def write_metadata(metadata: dict) -> None:
 
 
 def check_package_update(name: str, package_metadata: dict) -> dict | None:
-    """Check a single package for updates."""
+    """Check a single package for updates.
+
+    Returns:
+        - dict with update info if newer version available
+        - dict with skip info if release is too young
+        - None if no update available or error
+    """
+    console = Console()
     current_version = package_metadata.get("version")
     repo_url = package_metadata.get("repo_url")
-
     if not current_version or not repo_url:
         return None
-
     owner, repo = get_owner_and_repo(repo_url)
     if not owner or not repo:
         return None
-
     try:
-        latest_tag = get_latest_github_release_version(owner, repo)
+        latest_tag, published_at = get_latest_github_release_version(owner, repo)
     except Exception:
         return None
-
     if not latest_tag:
         return None
-
+    # Skip releases younger than RELEASE_AGE_DAYS to allow for critical issues to surface
+    if published_at:
+        try:
+            published_date = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+            age_days = (datetime.now(UTC) - published_date).days
+            if age_days < RELEASE_AGE_DAYS:
+                console.print(
+                    f"[yellow]⏭[/yellow] {name}: v{latest_tag} "
+                    f"skipped ({age_days} days old, < {RELEASE_AGE_DAYS} days)"
+                )
+                return {
+                    "package": name,
+                    "current_version": current_version,
+                    "skipped_version": latest_tag,
+                    "reason": f"Release too young ({age_days} days old, < {RELEASE_AGE_DAYS} days)",
+                }
+        except (ValueError, TypeError):
+            pass  # If date parsing fails, proceed with update
     match = re.search(r"v?(\d+\.\d+\.\d+)", latest_tag)
     if not match:
         return None
-
     latest_version = match.group(1)
-
     try:
         if semver.Version.parse(current_version) < semver.Version.parse(latest_version):
             return {
@@ -148,7 +169,6 @@ def check_package_update(name: str, package_metadata: dict) -> dict | None:
             }
     except ValueError:
         return None
-
     return None
 
 
@@ -178,10 +198,15 @@ def get_owner_and_repo(url: str):
     wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
     retry=tenacity.retry_if_exception_type((requests.exceptions.Timeout, GitHubRateLimitError)),
 )
-def get_latest_github_release_version(owner: str, repo: str) -> str | None:
-    """Get latest GitHub release version with retry logic."""
+def get_latest_github_release_version(owner: str, repo: str) -> tuple[str | None, str | None]:
+    """Get latest GitHub release version and published_at with retry logic.
+
+    Returns:
+        (tag_name, published_at) on success
+        (None, None) on failure
+    """
     if not owner or not repo:
-        return None
+        return None, None
 
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
     headers = {
@@ -207,22 +232,29 @@ def get_latest_github_release_version(owner: str, repo: str) -> str | None:
             raise GitHubRateLimitError(
                 f"Rate limited. Resets in {wait_time} seconds. Set GITHUB_TOKEN for higher limits."
             )
-        return None
+        return None, None
 
     if response.status_code == 429:
         raise GitHubRateLimitError("Too many requests")
 
     if response.status_code != 200:
-        return None
+        return None, None
 
     data = response.json()
-    return data.get("tag_name")
+    return data.get("tag_name"), data.get("published_at")
 
 
-def detect_updates(metadata: dict) -> list[dict]:
-    """Detect available package updates with progress tracking."""
+def detect_updates(metadata: dict) -> tuple[list[dict], list[dict]]:
+    """Detect available package updates with progress tracking.
+
+    Returns:
+        tuple of (updates, skipped) where:
+        - updates: list of dicts with 'package', 'from_version', 'to_version'
+        - skipped: list of dicts with 'package', 'current_version', 'skipped_version', 'reason'
+    """
     console = Console()
     updates = []
+    skipped = []
 
     with Progress(
         SpinnerColumn(),
@@ -246,24 +278,27 @@ def detect_updates(metadata: dict) -> list[dict]:
                 try:
                     result = future.result(timeout=60)  # 60s timeout per package
                     if result:
-                        updates.append(result)
-                        console.print(
-                            f"  [green]✓[/green] {result['package']}: "
-                            f"{result['from_version']} → {result['to_version']}"
-                        )
+                        if "skipped_version" in result:
+                            skipped.append(result)
+                        else:
+                            updates.append(result)
+                            console.print(
+                                f"  [green]✓[/green] {result['package']}: "
+                                f"{result['from_version']} → {result['to_version']}"
+                            )
                 except Exception:
                     console.print(f"  [red]✗[/red] {package_name}: Failed to check")
                 finally:
                     progress.update(task, advance=1)
 
-    return updates
+    return updates, skipped
 
 
 @task(aliases=["a", "all"])
 def update_all(c, dry_run: bool = False) -> None:
     """Check and update all tools."""
     metadata = metadata_cache.get()
-    updates = detect_updates(metadata)
+    updates, _skipped = detect_updates(metadata)
 
     if not updates:
         return
@@ -287,7 +322,7 @@ def package(c, name: str, dry_run: bool = False) -> None:
         return
 
     single = {name: metadata[name]}
-    updates = detect_updates(single)
+    updates, _skipped = detect_updates(single)
 
     if not updates:
         return
@@ -323,7 +358,7 @@ def add(
     if package_name in metadata:
         raise ValueError(f"Package '{package_name}' already exists")
 
-    latest_tag = get_latest_github_release_version(owner, repo)
+    latest_tag, _ = get_latest_github_release_version(owner, repo)
     if not latest_tag:
         raise ValueError("Unable to determine latest release version")
 
@@ -355,10 +390,18 @@ def automation(c, ci: bool = False, dry_run: bool = False) -> None:
     """Run full update automation with PR creation and auto-merge."""
 
     metadata = metadata_cache.get()
-    updates = detect_updates(metadata)
+    updates, skipped = detect_updates(metadata)
+
+    if not updates and not skipped:
+        print("No updates found.")
+        return
 
     if not updates:
-        print("No updates found.")
+        print("No updates found, but some releases were skipped:")
+        for s in skipped:
+            print(
+                f"  {s['package']}: {s['current_version']} → {s['skipped_version']} ({s['reason']})"
+            )
         return
 
     branch_name = f"automation/update-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}"
@@ -410,6 +453,21 @@ def automation(c, ci: bool = False, dry_run: bool = False) -> None:
             "```\n\n"
             "</details>"
         )
+
+        if skipped:
+            skip_lines = ["| Package | Current | Skipped | Reason |", "|---|---|---|---|"]
+            for s in skipped:
+                skip_lines.append(
+                    f"| {s['package']} | {s['current_version']} "
+                    f"| {s['skipped_version']} | {s['reason']} |"
+                )
+            skip_table = "\n".join(skip_lines)
+            body += (
+                "\n\n<details>\n"
+                "<summary>Skipped Releases (click to expand)</summary>\n\n"
+                f"{skip_table}\n\n"
+                "</details>"
+            )
 
         # Check for existing open PR
         pr_check = subprocess.run(
