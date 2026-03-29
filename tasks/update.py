@@ -143,10 +143,13 @@ def check_package_update(name: str, package_metadata: dict) -> dict | None:
             published_date = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
             age_days = (datetime.now(UTC) - published_date).days
             if age_days < RELEASE_AGE_DAYS:
+                skipped_version = latest_tag.lstrip("v")
+                if skipped_version == current_version:
+                    return None
                 return {
                     "package": name,
                     "current_version": current_version,
-                    "skipped_version": latest_tag.lstrip("v"),
+                    "skipped_version": skipped_version,
                     "reason": f"Release too young ({age_days} days old, < {RELEASE_AGE_DAYS} days)",
                 }
         except (ValueError, TypeError):
@@ -286,11 +289,6 @@ def detect_updates(metadata: dict) -> tuple[list[dict], list[dict]]:
                 finally:
                     progress.update(task, advance=1)
 
-    for s in skipped:
-        console.print(
-            f"[yellow]⏭[/yellow] {s['package']}: {s['skipped_version']} skipped - {s['reason']}"
-        )
-
     return updates, skipped
 
 
@@ -389,28 +387,32 @@ def add(
 def automation(c, ci: bool = False, dry_run: bool = False) -> None:
     """Run full update automation with PR creation and auto-merge."""
 
+    console = Console()
     metadata = metadata_cache.get()
     updates, skipped = detect_updates(metadata)
 
     if not updates and not skipped:
-        print("No updates found.")
+        console.print("No updates found.")
         return
 
     if not updates:
-        print("No updates found, but some releases were skipped:")
+        console.print("No updates found, but some releases were skipped:")
         for s in skipped:
-            print(
-                f"  {s['package']}: {s['current_version']} → {s['skipped_version']} ({s['reason']})"
+            console.print(
+                f"  [yellow]⏭[/yellow] {s['package']}: {s['current_version']} → "
+                f"{s['skipped_version']} ({s['reason']})"
             )
         return
 
     branch_name = f"automation/update-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}"
 
     if dry_run:
-        print("Dry run mode enabled.")
-        print(f"Would create branch: {branch_name}")
-        print("Would commit: chore: update tools")
-        print(f"Would create PR targeting 'main' with {len(updates)} update(s).")
+        console.print("[bold]Dry run mode enabled.[/bold]")
+        console.print(f"Would create branch: [cyan]{branch_name}[/cyan]")
+        console.print("Would commit: [cyan]chore: update tools[/cyan]")
+        console.print(
+            f"Would create PR targeting [cyan]'main'[/cyan] with {len(updates)} update(s)."
+        )
         return
 
     with ensure_clean_checkout():
@@ -491,7 +493,7 @@ def automation(c, ci: bool = False, dry_run: bool = False) -> None:
 
         if existing_prs:
             pr_number = str(existing_prs[0]["number"])
-            print(f"Reusing existing PR: {existing_prs[0]['url']}")
+            console.print(f"Reusing existing PR: [cyan]{existing_prs[0]['url']}[/cyan]")
         else:
             subprocess.run(
                 [
