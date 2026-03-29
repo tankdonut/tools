@@ -23,6 +23,9 @@ dependencies = [
   "tenacity (>=9.0.0,<10.0.0)",
 ]
 
+[tool.uv]
+exclude-newer = "P7D"
+
 [tool.ruff]
 line-length = 100
 src = ["tasks", "tests"]
