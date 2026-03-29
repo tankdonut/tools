@@ -288,7 +288,7 @@ def detect_updates(metadata: dict) -> tuple[list[dict], list[dict]]:
 
     for s in skipped:
         console.print(
-            f"[yellow]⏭[/yellow] {s['package']}: v{s['skipped_version']} skipped - {s['reason']}"
+            f"[yellow]⏭[/yellow] {s['package']}: {s['skipped_version']} skipped - {s['reason']}"
         )
 
     return updates, skipped
