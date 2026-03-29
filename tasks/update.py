@@ -145,13 +145,13 @@ def check_package_update(name: str, package_metadata: dict) -> dict | None:
             age_days = (datetime.now(UTC) - published_date).days
             if age_days < RELEASE_AGE_DAYS:
                 console.print(
-                    f"[yellow]⏭[/yellow] {name}: v{latest_tag} "
+                    f"[yellow]⏭[/yellow] {name}: {latest_tag} "
                     f"skipped ({age_days} days old, < {RELEASE_AGE_DAYS} days)"
                 )
                 return {
                     "package": name,
                     "current_version": current_version,
-                    "skipped_version": latest_tag,
+                    "skipped_version": latest_tag.lstrip("v"),
                     "reason": f"Release too young ({age_days} days old, < {RELEASE_AGE_DAYS} days)",
                 }
         except (ValueError, TypeError):

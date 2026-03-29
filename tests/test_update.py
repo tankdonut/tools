@@ -214,7 +214,7 @@ class TestReleaseAgeFilter:
         # Should return skip info because release is too young (< 7 days)
         assert result is not None
         assert "skipped_version" in result
-        assert result["skipped_version"] == "v2.0.0"
+        assert result["skipped_version"] == "2.0.0"
         assert result["package"] == "test-pkg"
         assert "too young" in result["reason"]
 
