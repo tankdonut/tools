@@ -116,7 +116,9 @@ def write_metadata(metadata: dict) -> None:
     METADATA_FILE.write_text(rendered, encoding="utf-8")
 
 
-def _try_previous_release(name: str, owner: str, repo: str, current_version: str) -> dict | None:
+def _try_previous_release(
+    name: str, owner: str, repo: str, current_version: str, *, cooldown: int = RELEASE_AGE_DAYS
+) -> dict | None:
     """Walk back through previous releases to find one old enough to use."""
     try:
         releases = get_previous_github_releases(owner, repo)
@@ -149,7 +151,7 @@ def _try_previous_release(name: str, owner: str, repo: str, current_version: str
             age_days = (datetime.now(UTC) - published_date).days
         except (ValueError, TypeError):
             continue
-        if age_days >= RELEASE_AGE_DAYS:
+        if age_days >= cooldown:
             return {
                 "package": name,
                 "from_version": current_version,
@@ -158,7 +160,9 @@ def _try_previous_release(name: str, owner: str, repo: str, current_version: str
     return None
 
 
-def check_package_update(name: str, package_metadata: dict) -> dict | None:
+def check_package_update(
+    name: str, package_metadata: dict, *, cooldown: int = RELEASE_AGE_DAYS
+) -> dict | None:
     """Check a single package for updates.
 
     Returns:
@@ -179,22 +183,24 @@ def check_package_update(name: str, package_metadata: dict) -> dict | None:
         return None
     if not latest_tag:
         return None
-    if published_at:
+    if published_at and cooldown > 0:
         try:
             published_date = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
             age_days = (datetime.now(UTC) - published_date).days
-            if age_days < RELEASE_AGE_DAYS:
+            if age_days < cooldown:
                 skipped_version = latest_tag.lstrip("v")
                 if skipped_version == current_version:
                     return None
-                fallback = _try_previous_release(name, owner, repo, current_version)
+                fallback = _try_previous_release(
+                    name, owner, repo, current_version, cooldown=cooldown
+                )
                 if fallback:
                     return fallback
                 return {
                     "package": name,
                     "current_version": current_version,
                     "skipped_version": skipped_version,
-                    "reason": f"Release too young ({age_days} days old, < {RELEASE_AGE_DAYS} days)",
+                    "reason": f"Release too young ({age_days} days old, < {cooldown} days)",
                 }
         except (ValueError, TypeError):
             pass
@@ -326,7 +332,9 @@ def get_previous_github_releases(
     return releases
 
 
-def detect_updates(metadata: dict) -> tuple[list[dict], list[dict]]:
+def detect_updates(
+    metadata: dict, *, cooldown: int = RELEASE_AGE_DAYS
+) -> tuple[list[dict], list[dict]]:
     """Detect available package updates with progress tracking.
 
     Returns:
@@ -351,7 +359,7 @@ def detect_updates(metadata: dict) -> tuple[list[dict], list[dict]]:
 
         with ThreadPoolExecutor(max_workers=10) as executor:
             future_to_package = {
-                executor.submit(check_package_update, name, meta): name
+                executor.submit(check_package_update, name, meta, cooldown=cooldown): name
                 for name, meta in metadata.items()
             }
 
@@ -377,10 +385,10 @@ def detect_updates(metadata: dict) -> tuple[list[dict], list[dict]]:
 
 
 @task(aliases=["a", "all"])
-def update_all(c, dry_run: bool = False) -> None:
+def update_all(c, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS) -> None:
     """Check and update all tools."""
     metadata = metadata_cache.get()
-    updates, _skipped = detect_updates(metadata)
+    updates, _skipped = detect_updates(metadata, cooldown=cooldown)
 
     if not updates:
         return
@@ -396,7 +404,7 @@ def update_all(c, dry_run: bool = False) -> None:
 
 
 @task(aliases=["p"])
-def package(c, name: str, dry_run: bool = False) -> None:
+def package(c, name: str, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS) -> None:
     """Check and update single package."""
     metadata = metadata_cache.get()
 
@@ -404,7 +412,7 @@ def package(c, name: str, dry_run: bool = False) -> None:
         return
 
     single = {name: metadata[name]}
-    updates, _skipped = detect_updates(single)
+    updates, _skipped = detect_updates(single, cooldown=cooldown)
 
     if not updates:
         return
@@ -468,12 +476,14 @@ def add(
 
 
 @task
-def automation(c, ci: bool = False, dry_run: bool = False) -> None:
+def automation(
+    c, ci: bool = False, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS
+) -> None:
     """Run full update automation with PR creation and auto-merge."""
 
     console = Console()
     metadata = metadata_cache.get()
-    updates, skipped = detect_updates(metadata)
+    updates, skipped = detect_updates(metadata, cooldown=cooldown)
 
     if not updates and not skipped:
         console.print("No updates found.")
