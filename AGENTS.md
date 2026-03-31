@@ -39,8 +39,8 @@ Keep changes easy to understand and easy to revert.
 - `uv run inv install --name <tool> --local` - Install single tool to ~/.local/bin
 - `uv run inv install --force` - Force reinstall all tools
 - `uv run inv install --name <tool> --force` - Force reinstall single tool
-- `uv run inv update.update-all` - Update all tools to latest releases
-- `uv run inv update.package --name <tool>` - Update single tool
+- `uv run inv update.tools` - Update all tools to latest releases
+- `uv run inv update.tool --name <tool>` - Update single tool
 
 ---
 

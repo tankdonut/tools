@@ -384,8 +384,8 @@ def detect_updates(
     return updates, skipped
 
 
-@task(aliases=["a", "all"])
-def update_all(c, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS) -> None:
+@task(aliases=["a"])
+def tools(c, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS) -> None:
     """Check and update all tools."""
     metadata = metadata_cache.get()
     updates, _skipped = detect_updates(metadata, cooldown=cooldown)
@@ -403,9 +403,9 @@ def update_all(c, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS) -> No
     metadata_cache.clear()
 
 
-@task(aliases=["p"])
-def package(c, name: str, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS) -> None:
-    """Check and update single package."""
+@task(aliases=["t"])
+def tool(c, name: str, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS) -> None:
+    """Check and update single tool."""
     metadata = metadata_cache.get()
 
     if name not in metadata:
