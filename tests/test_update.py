@@ -1,6 +1,12 @@
+import json
 from unittest.mock import Mock, patch
 
-from tasks.update import detect_updates, get_latest_github_release_version, get_owner_and_repo
+from tasks.update import (
+    detect_updates,
+    get_latest_github_release_version,
+    get_owner_and_repo,
+    get_previous_github_releases,
+)
 
 
 class TestDetectUpdates:
@@ -279,3 +285,279 @@ class TestReleaseAgeFilter:
         assert result["package"] == "test-pkg"
         assert result["from_version"] == "1.0.0"
         assert result["to_version"] == "2.0.0"
+
+
+class TestGetPreviousGitHubReleases:
+    """Test get_previous_github_releases function."""
+
+    @patch("tasks.update.subprocess.run")
+    def test_success(self, mock_run):
+        mock_run.return_value = Mock(
+            returncode=0,
+            stdout=json.dumps(
+                [
+                    {
+                        "tagName": "v2.0.0",
+                        "publishedAt": "2025-01-15T00:00:00Z",
+                        "isDraft": False,
+                        "isPrerelease": False,
+                    },
+                    {
+                        "tagName": "v1.9.0",
+                        "publishedAt": "2025-01-10T00:00:00Z",
+                        "isDraft": False,
+                        "isPrerelease": False,
+                    },
+                    {
+                        "tagName": "v1.8.0",
+                        "publishedAt": "2025-01-05T00:00:00Z",
+                        "isDraft": True,
+                        "isPrerelease": False,
+                    },
+                    {
+                        "tagName": "v1.7.0",
+                        "publishedAt": "2025-01-01T00:00:00Z",
+                        "isDraft": False,
+                        "isPrerelease": True,
+                    },
+                ]
+            ),
+        )
+
+        result = get_previous_github_releases("test", "repo")
+
+        assert len(result) == 2
+        assert result[0] == ("v2.0.0", "2025-01-15T00:00:00Z")
+        assert result[1] == ("v1.9.0", "2025-01-10T00:00:00Z")
+
+    @patch("tasks.update.subprocess.run")
+    def test_empty_releases(self, mock_run):
+        mock_run.return_value = Mock(returncode=0, stdout="[]")
+
+        result = get_previous_github_releases("test", "repo")
+
+        assert result == []
+
+    @patch("tasks.update.subprocess.run")
+    def test_non_zero_exit_returns_empty(self, mock_run):
+        mock_run.return_value = Mock(returncode=1, stdout="", stderr="error")
+
+        result = get_previous_github_releases("test", "repo")
+
+        assert result == []
+
+    @patch("tasks.update.subprocess.run")
+    def test_invalid_json_returns_empty(self, mock_run):
+        mock_run.return_value = Mock(returncode=0, stdout="not json")
+
+        result = get_previous_github_releases("test", "repo")
+
+        assert result == []
+
+    def test_empty_owner_returns_empty(self):
+        result = get_previous_github_releases("", "repo")
+        assert result == []
+
+
+class TestReleaseFallback:
+    """Test fallback to previous releases when latest is too young."""
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_fallback_to_previous_release(self, mock_latest, mock_previous):
+        """When latest is too young, fall back to the previous release if old enough."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        three_days_ago = (now - timedelta(days=3)).isoformat()
+        ten_days_ago = (now - timedelta(days=10)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_previous.return_value = [
+            ("v1.3.9", three_days_ago),
+            ("v1.3.8", ten_days_ago),
+        ]
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert result["package"] == "opencode"
+        assert result["from_version"] == "1.3.5"
+        assert result["to_version"] == "1.3.8"
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_fallback_all_previous_too_young(self, mock_latest, mock_previous):
+        """When all previous releases are also too young, return skip info."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        three_days_ago = (now - timedelta(days=3)).isoformat()
+        five_days_ago = (now - timedelta(days=5)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_previous.return_value = [
+            ("v1.3.9", three_days_ago),
+            ("v1.3.8", five_days_ago),
+        ]
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert "skipped_version" in result
+        assert result["skipped_version"] == "1.3.9"
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_fallback_previous_equal_to_current(self, mock_latest, mock_previous):
+        """When previous release equals current version, return skip info."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        three_days_ago = (now - timedelta(days=3)).isoformat()
+        ten_days_ago = (now - timedelta(days=10)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_previous.return_value = [
+            ("v1.3.9", three_days_ago),
+            ("v1.3.5", ten_days_ago),
+        ]
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert "skipped_version" in result
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_fallback_previous_older_than_current(self, mock_latest, mock_previous):
+        """When all previous releases are older than current, return skip info."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        three_days_ago = (now - timedelta(days=3)).isoformat()
+        ten_days_ago = (now - timedelta(days=10)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_previous.return_value = [
+            ("v1.3.9", three_days_ago),
+            ("v1.3.4", ten_days_ago),
+        ]
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert "skipped_version" in result
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_fallback_empty_previous_releases(self, mock_latest, mock_previous):
+        """When no previous releases available, return skip info."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        three_days_ago = (now - timedelta(days=3)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_previous.return_value = []
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert "skipped_version" in result
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_fallback_api_failure(self, mock_latest, mock_previous):
+        """When get_previous_github_releases raises, return skip info."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        three_days_ago = (now - timedelta(days=3)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_previous.side_effect = Exception("API error")
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert "skipped_version" in result
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_fallback_skips_releases_without_date(self, mock_latest, mock_previous):
+        """Releases without published_at are skipped during fallback."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        three_days_ago = (now - timedelta(days=3)).isoformat()
+        ten_days_ago = (now - timedelta(days=10)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_previous.return_value = [
+            ("v1.3.9", three_days_ago),
+            ("v1.3.8", None),
+            ("v1.3.7", ten_days_ago),
+        ]
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert result["to_version"] == "1.3.7"
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_fallback_walks_multiple_releases(self, mock_latest, mock_previous):
+        """Walks back through multiple too-young releases to find an old enough one."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        two_days_ago = (now - timedelta(days=2)).isoformat()
+        four_days_ago = (now - timedelta(days=4)).isoformat()
+        six_days_ago = (now - timedelta(days=6)).isoformat()
+        fifteen_days_ago = (now - timedelta(days=15)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", two_days_ago)
+        mock_previous.return_value = [
+            ("v1.3.9", two_days_ago),
+            ("v1.3.8", four_days_ago),
+            ("v1.3.7", six_days_ago),
+            ("v1.3.6", fifteen_days_ago),
+        ]
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert result["to_version"] == "1.3.6"

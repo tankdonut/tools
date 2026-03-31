@@ -116,6 +116,48 @@ def write_metadata(metadata: dict) -> None:
     METADATA_FILE.write_text(rendered, encoding="utf-8")
 
 
+def _try_previous_release(name: str, owner: str, repo: str, current_version: str) -> dict | None:
+    """Walk back through previous releases to find one old enough to use."""
+    try:
+        releases = get_previous_github_releases(owner, repo)
+    except Exception:
+        return None
+
+    if not releases:
+        return None
+
+    try:
+        current_semver = semver.Version.parse(current_version)
+    except ValueError:
+        return None
+
+    for tag, published_at in releases:
+        match = re.search(r"v?(\d+\.\d+\.\d+)", tag)
+        if not match:
+            continue
+        release_version = match.group(1)
+        try:
+            release_semver = semver.Version.parse(release_version)
+        except ValueError:
+            continue
+        if release_semver <= current_semver:
+            continue
+        if not published_at:
+            continue
+        try:
+            published_date = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+            age_days = (datetime.now(UTC) - published_date).days
+        except (ValueError, TypeError):
+            continue
+        if age_days >= RELEASE_AGE_DAYS:
+            return {
+                "package": name,
+                "from_version": current_version,
+                "to_version": release_version,
+            }
+    return None
+
+
 def check_package_update(name: str, package_metadata: dict) -> dict | None:
     """Check a single package for updates.
 
@@ -137,7 +179,6 @@ def check_package_update(name: str, package_metadata: dict) -> dict | None:
         return None
     if not latest_tag:
         return None
-    # Skip releases younger than RELEASE_AGE_DAYS to allow for critical issues to surface
     if published_at:
         try:
             published_date = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
@@ -146,6 +187,9 @@ def check_package_update(name: str, package_metadata: dict) -> dict | None:
                 skipped_version = latest_tag.lstrip("v")
                 if skipped_version == current_version:
                     return None
+                fallback = _try_previous_release(name, owner, repo, current_version)
+                if fallback:
+                    return fallback
                 return {
                     "package": name,
                     "current_version": current_version,
@@ -153,7 +197,7 @@ def check_package_update(name: str, package_metadata: dict) -> dict | None:
                     "reason": f"Release too young ({age_days} days old, < {RELEASE_AGE_DAYS} days)",
                 }
         except (ValueError, TypeError):
-            pass  # If date parsing fails, proceed with update
+            pass
     match = re.search(r"v?(\d+\.\d+\.\d+)", latest_tag)
     if not match:
         return None
@@ -240,6 +284,46 @@ def get_latest_github_release_version(owner: str, repo: str) -> tuple[str | None
 
     data = response.json()
     return data.get("tag_name"), data.get("published_at")
+
+
+def get_previous_github_releases(
+    owner: str, repo: str, limit: int = 10
+) -> list[tuple[str, str | None]]:
+    """Get previous GitHub releases via gh CLI, ordered newest first."""
+    if not owner or not repo:
+        return []
+
+    full_repo = f"{owner}/{repo}"
+    result = subprocess.run(
+        [
+            "gh",
+            "release",
+            "list",
+            "--repo",
+            full_repo,
+            "--limit",
+            str(limit),
+            "--json",
+            "tagName,publishedAt,isDraft,isPrerelease",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        return []
+
+    try:
+        data = json.loads(result.stdout)
+    except (json.JSONDecodeError, ValueError):
+        return []
+
+    releases: list[tuple[str, str | None]] = []
+    for release in data:
+        if release.get("isDraft", False) or release.get("isPrerelease", False):
+            continue
+        releases.append((release.get("tagName", ""), release.get("publishedAt")))
+    return releases
 
 
 def detect_updates(metadata: dict) -> tuple[list[dict], list[dict]]:
