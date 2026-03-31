@@ -118,19 +118,19 @@ Refer to existing entries in `tasks/metadata.yaml` for patterns.
 To update all tools to their latest GitHub release:
 
 ```bash
-uv run inv update.update-all
+uv run inv update.tools
 ```
 
 To update a single tool:
 
 ```bash
-uv run inv update.package --name <tool>
+uv run inv update.tool --name <tool>
 ```
 
 To preview updates without writing changes:
 
 ```bash
-uv run inv update.update-all --dry-run
+uv run inv update.tools --dry-run
 ```
 
 These commands:
