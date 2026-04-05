@@ -561,3 +561,286 @@ class TestReleaseFallback:
 
         assert result is not None
         assert result["to_version"] == "1.3.6"
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_fallback_walk_produces_checked_versions_chain(self, mock_latest, mock_previous):
+        """Fallback walk accumulates checked_versions with too_young and selected entries."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        two_days_ago = (now - timedelta(days=2)).isoformat()
+        four_days_ago = (now - timedelta(days=4)).isoformat()
+        six_days_ago = (now - timedelta(days=6)).isoformat()
+        fifteen_days_ago = (now - timedelta(days=15)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", two_days_ago)
+        mock_previous.return_value = [
+            ("v1.3.9", two_days_ago),
+            ("v1.3.8", four_days_ago),
+            ("v1.3.7", six_days_ago),
+            ("v1.3.6", fifteen_days_ago),
+        ]
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert "checked_versions" in result
+        cv = result["checked_versions"]
+        assert cv[0]["version"] == "1.3.9"
+        assert cv[0]["status"] == "too_young"
+        assert cv[1]["version"] == "1.3.8"
+        assert cv[1]["status"] == "too_young"
+        assert cv[2]["version"] == "1.3.7"
+        assert cv[2]["status"] == "too_young"
+        assert cv[3]["version"] == "1.3.6"
+        assert cv[3]["status"] == "selected"
+
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_direct_update_has_no_checked_versions(self, mock_latest):
+        """Direct update path does not include checked_versions."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        eight_days_ago = (now - timedelta(days=8)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", eight_days_ago)
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert result["from_version"] == "1.3.5"
+        assert result["to_version"] == "1.3.9"
+        assert "checked_versions" not in result
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    def test_skip_includes_checked_versions(self, mock_latest, mock_previous):
+        """Skip dict includes checked_versions with latest as too_young."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.update import check_package_update
+
+        now = datetime.now(UTC)
+        three_days_ago = (now - timedelta(days=3)).isoformat()
+
+        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_previous.return_value = []
+
+        metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("opencode", metadata)
+
+        assert result is not None
+        assert "skipped_version" in result
+        assert "checked_versions" in result
+        cv = result["checked_versions"]
+        assert len(cv) == 1
+        assert cv[0]["version"] == "1.3.9"
+        assert cv[0]["status"] == "too_young"
+
+
+class TestFormatCheckedVersions:
+    """Test _format_checked_versions helper."""
+
+    def test_empty_list(self):
+        from tasks.update import _format_checked_versions
+
+        assert _format_checked_versions([]) == ""
+
+    def test_single_entry(self):
+        from tasks.update import _format_checked_versions
+
+        result = _format_checked_versions(
+            [{"version": "1.3.9", "age_days": 2, "status": "too_young"}]
+        )
+        assert result == "v1.3.9 (2d)"
+
+    def test_multiple_entries(self):
+        from tasks.update import _format_checked_versions
+
+        result = _format_checked_versions(
+            [
+                {"version": "1.3.9", "age_days": 2, "status": "too_young"},
+                {"version": "1.3.8", "age_days": 4, "status": "too_young"},
+                {"version": "1.3.6", "age_days": 15, "status": "selected"},
+            ]
+        )
+        assert result == "v1.3.9 (2d), v1.3.8 (4d), v1.3.6 (15d)"
+
+
+class TestDetectUpdatesDisplay:
+    """Test detect_updates console output for checked_versions."""
+
+    @patch("tasks.update.get_previous_github_releases")
+    @patch("tasks.update.get_latest_github_release_version")
+    @patch("tasks.update.Progress")
+    @patch("tasks.update.Console")
+    def test_shows_walk_chain_for_fallback_update(
+        self,
+        mock_console_cls,
+        mock_progress_cls,
+        mock_latest,
+        mock_previous,
+        sample_metadata,
+    ):
+        """Fallback update prints 'walked:' line with version chain."""
+        from datetime import UTC, datetime, timedelta
+
+        mock_console_instance = mock_console_cls.return_value
+        now = datetime.now(UTC)
+        two_days_ago = (now - timedelta(days=2)).isoformat()
+        ten_days_ago = (now - timedelta(days=10)).isoformat()
+
+        # Make Progress a no-op context manager
+        mock_progress = Mock()
+        mock_progress.__enter__ = Mock(return_value=mock_progress)
+        mock_progress.__exit__ = Mock(return_value=False)
+        mock_progress_cls.return_value = mock_progress
+
+        mock_latest.side_effect = [("v2.0.0", two_days_ago), ("v3.0.0", ten_days_ago)]
+        mock_previous.side_effect = [
+            [("v2.0.0", two_days_ago), ("v1.9.0", ten_days_ago)],
+            [],
+        ]
+
+        updates, _skipped = detect_updates(sample_metadata)
+
+        assert len(updates) >= 1
+        fallback = [u for u in updates if "checked_versions" in u]
+        assert len(fallback) == 1
+        assert fallback[0]["to_version"] == "1.9.0"
+
+        print_calls = [str(call) for call in mock_console_instance.print.call_args_list]
+        walked_calls = [c for c in print_calls if "walked:" in c]
+        assert len(walked_calls) == 1
+
+
+class TestAutomationSkippedDisplay:
+    """Test automation skipped packages display with checked_versions."""
+
+    @patch("tasks.update.subprocess.run")
+    @patch("tasks.update.metadata_cache")
+    @patch("tasks.update.detect_updates")
+    @patch("pathlib.Path.read_bytes")
+    @patch("pathlib.Path.exists")
+    def test_skipped_console_includes_walk_chain(
+        self,
+        mock_exists,
+        mock_read_bytes,
+        mock_detect,
+        mock_cache,
+        mock_subprocess,
+        temp_metadata_file,
+    ):
+        """Console output for skipped packages includes walked chain."""
+        from invoke.context import Context
+        from tasks.update import automation
+
+        mock_exists.return_value = True
+        mock_read_bytes.return_value = b"test-content"
+
+        skip_with_chain = {
+            "package": "test-pkg",
+            "current_version": "1.0.0",
+            "skipped_version": "2.0.0",
+            "reason": "too young",
+            "checked_versions": [
+                {"version": "2.0.0", "age_days": 2, "status": "too_young"},
+            ],
+        }
+
+        mock_cache.get.return_value = {"test-pkg": {"version": "1.0.0"}}
+        mock_cache.clear = Mock()
+        mock_detect.return_value = ([], [skip_with_chain])
+
+        def mock_run_side_effect(*args, **kwargs):
+            if "rev-parse" in str(args):
+                return Mock(stdout="main\n", stderr="", returncode=0)
+            return Mock(stdout="", stderr="", returncode=0)
+
+        mock_subprocess.side_effect = mock_run_side_effect
+
+        ctx = Context()
+        automation(ctx, ci=False, dry_run=True)
+
+    @patch("tasks.update.subprocess.run")
+    @patch("tasks.update.subprocess.check_output")
+    @patch("tasks.update.metadata_cache")
+    @patch("tasks.update.detect_updates")
+    @patch("tasks.update.write_metadata")
+    @patch("pathlib.Path.read_bytes")
+    @patch("pathlib.Path.exists")
+    def test_pr_body_includes_checked_versions_header(
+        self,
+        mock_exists,
+        mock_read_bytes,
+        mock_write,
+        mock_detect,
+        mock_cache,
+        mock_check_output,
+        mock_subprocess,
+        temp_metadata_file,
+    ):
+        """PR body contains Checked Versions column header when skips have chain."""
+        from invoke.context import Context
+        from tasks.update import automation
+
+        mock_exists.return_value = True
+        mock_read_bytes.return_value = b"test-content"
+
+        updates_list = [{"package": "test-pkg", "from_version": "1.0.0", "to_version": "2.0.0"}]
+        skip_with_chain = {
+            "package": "other-pkg",
+            "current_version": "3.0.0",
+            "skipped_version": "4.0.0",
+            "reason": "too young",
+            "checked_versions": [
+                {"version": "4.0.0", "age_days": 2, "status": "too_young"},
+            ],
+        }
+
+        mock_cache.get.return_value = {"test-pkg": {"version": "1.0.0"}}
+        mock_cache.clear = Mock()
+        mock_detect.return_value = (updates_list, [skip_with_chain])
+        mock_check_output.return_value = "1"
+
+        gh_commands = []
+
+        def mock_run_side_effect(*args, **kwargs):
+            cmd = args[0] if args else kwargs.get("args", [])
+            gh_commands.append(cmd)
+            if "rev-parse" in str(cmd):
+                return Mock(stdout="main\n", stderr="", returncode=0)
+            if isinstance(cmd, list) and "pr" in cmd and "create" in cmd:
+                return Mock(
+                    stdout="https://github.com/test/repo/pull/1\n",
+                    stderr="",
+                    returncode=0,
+                )
+            return Mock(stdout="", stderr="", returncode=0)
+
+        mock_subprocess.side_effect = mock_run_side_effect
+
+        ctx = Context()
+        automation(ctx, ci=False, dry_run=False)
+
+        pr_create_calls = [
+            c for c in gh_commands if isinstance(c, list) and "pr" in c and "create" in c
+        ]
+        assert len(pr_create_calls) >= 1, "Expected a PR create command"
+
+        pr_cmd = pr_create_calls[0]
+        body_idx = pr_cmd.index("--body") + 1
+        body = pr_cmd[body_idx]
+
+        assert "Checked Versions" in body
+        assert "v4.0.0 (2d)" in body
