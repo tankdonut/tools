@@ -35,6 +35,16 @@ RELEASE_AGE_DAYS = 7
 metadata_cache = MetadataCache()
 
 
+def _format_checked_versions(checked_versions: list[dict]) -> str:
+    """Format checked_versions list into a display string."""
+    if not checked_versions:
+        return ""
+    parts = []
+    for entry in checked_versions:
+        parts.append(f"v{entry['version']} ({entry['age_days']}d)")
+    return ", ".join(parts)
+
+
 class AutomationError(Exception):
     """Base exception for automation errors."""
 
@@ -118,20 +128,26 @@ def write_metadata(metadata: dict) -> None:
 
 def _try_previous_release(
     name: str, owner: str, repo: str, current_version: str, *, cooldown: int = RELEASE_AGE_DAYS
-) -> dict | None:
-    """Walk back through previous releases to find one old enough to use."""
+) -> tuple[dict | None, list[dict]]:
+    """Walk back through previous releases to find one old enough to use.
+
+    Returns a tuple of (result_dict_or_None, checked_versions_list).
+    checked_versions contains entries for each release that reached age computation.
+    """
+    checked_versions: list[dict] = []
+
     try:
         releases = get_previous_github_releases(owner, repo)
     except Exception:
-        return None
+        return None, []
 
     if not releases:
-        return None
+        return None, []
 
     try:
         current_semver = semver.Version.parse(current_version)
     except ValueError:
-        return None
+        return None, []
 
     for tag, published_at in releases:
         match = re.search(r"v?(\d+\.\d+\.\d+)", tag)
@@ -152,12 +168,18 @@ def _try_previous_release(
         except (ValueError, TypeError):
             continue
         if age_days >= cooldown:
+            checked_versions.append(
+                {"version": release_version, "age_days": age_days, "status": "selected"}
+            )
             return {
                 "package": name,
                 "from_version": current_version,
                 "to_version": release_version,
-            }
-    return None
+            }, checked_versions
+        checked_versions.append(
+            {"version": release_version, "age_days": age_days, "status": "too_young"}
+        )
+    return None, checked_versions
 
 
 def check_package_update(
@@ -191,16 +213,24 @@ def check_package_update(
                 skipped_version = latest_tag.lstrip("v")
                 if skipped_version == current_version:
                     return None
-                fallback = _try_previous_release(
+                fallback, fallback_checked = _try_previous_release(
                     name, owner, repo, current_version, cooldown=cooldown
                 )
+                latest_entry = {
+                    "version": skipped_version,
+                    "age_days": age_days,
+                    "status": "too_young",
+                }
+                deduped = [e for e in fallback_checked if e["version"] != skipped_version]
                 if fallback:
+                    fallback["checked_versions"] = [latest_entry] + deduped
                     return fallback
                 return {
                     "package": name,
                     "current_version": current_version,
                     "skipped_version": skipped_version,
                     "reason": f"Release too young ({age_days} days old, < {cooldown} days)",
+                    "checked_versions": [latest_entry] + deduped,
                 }
         except (ValueError, TypeError):
             pass
@@ -376,6 +406,9 @@ def detect_updates(
                                 f"  [green]✓[/green] {result['package']}: "
                                 f"{result['from_version']} → {result['to_version']}"
                             )
+                            if "checked_versions" in result:
+                                chain = _format_checked_versions(result["checked_versions"])
+                                console.print(f"    walked: {chain}")
                 except Exception:
                     console.print(f"  [red]✗[/red] {package_name}: Failed to check")
                 finally:
@@ -492,9 +525,12 @@ def automation(
     if not updates:
         console.print("No updates found, but some releases were skipped:")
         for s in skipped:
+            chain_str = ""
+            if "checked_versions" in s:
+                chain_str = f" (walked: {_format_checked_versions(s['checked_versions'])})"
             console.print(
                 f"  [yellow]⏭[/yellow] {s['package']}: {s['current_version']} → "
-                f"{s['skipped_version']} ({s['reason']})"
+                f"{s['skipped_version']} ({s['reason']}){chain_str}"
             )
         return
 
@@ -551,11 +587,15 @@ def automation(
         )
 
         if skipped:
-            skip_lines = ["| Package | Current | Skipped | Reason |", "|---|---|---|---|"]
+            skip_lines = [
+                "| Package | Current | Skipped | Reason | Checked Versions |",
+                "|---|---|---|---|---|",
+            ]
             for s in skipped:
+                chain = _format_checked_versions(s.get("checked_versions", []))
                 skip_lines.append(
                     f"| {s['package']} | {s['current_version']} "
-                    f"| {s['skipped_version']} | {s['reason']} |"
+                    f"| {s['skipped_version']} | {s['reason']} | {chain} |"
                 )
             skip_table = "\n".join(skip_lines)
             body += (
