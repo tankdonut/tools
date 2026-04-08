@@ -59,7 +59,7 @@ ctlptl:
 
   repo_url: https://github.com/tilt-dev/ctlptl
   license: APACHE-2.0
-  version: 0.9.0
+  version: 0.9.2
 doctl:
   description: >
     A command line tool for DigitalOcean services
@@ -159,7 +159,7 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.3.11
+  version: 1.3.13
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
