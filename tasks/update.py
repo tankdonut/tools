@@ -658,6 +658,6 @@ def automation(
 
         # Enable auto-merge (respects branch protection rules)
         subprocess.run(
-            ["gh", "pr", "merge", pr_number, "--auto", "--squash"],
+            ["gh", "pr", "merge", pr_number, "--auto", "--squash", "--delete-branch"],
             check=False,
         )
