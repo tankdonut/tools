@@ -822,7 +822,7 @@ class TestAutomationSkippedDisplay:
                 return Mock(stdout="main\n", stderr="", returncode=0)
             if isinstance(cmd, list) and "pr" in cmd and "create" in cmd:
                 return Mock(
-                    stdout="https://github.com/test/repo/pull/1\n",
+                    stdout='{"number": 1, "url": "https://github.com/test/repo/pull/1"}\n',
                     stderr="",
                     returncode=0,
                 )
