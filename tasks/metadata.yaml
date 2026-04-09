@@ -79,7 +79,7 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.93.0
+  version: 1.94.0
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
