@@ -629,7 +629,7 @@ def automation(
             pr_number = str(existing_prs[0]["number"])
             console.print(f"Reusing existing PR: [cyan]{existing_prs[0]['url']}[/cyan]")
         else:
-            subprocess.run(
+            pr_create = subprocess.run(
                 [
                     "gh",
                     "pr",
@@ -642,13 +642,16 @@ def automation(
                     branch_name,
                     "--base",
                     "main",
+                    "--json",
+                    "number,url",
                 ],
+                capture_output=True,
+                text=True,
                 check=True,
             )
-            pr_number = subprocess.check_output(
-                ["gh", "pr", "view", "--json", "number", "--jq", ".number"],
-                text=True,
-            ).strip()
+            pr_data = json.loads(pr_create.stdout)
+            pr_number = str(pr_data["number"])
+            console.print(f"Created PR: [cyan]{pr_data['url']}[/cyan]")
 
         # Add dependencies label (ignore failure if label does not exist)
         subprocess.run(
