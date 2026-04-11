@@ -654,8 +654,6 @@ def automation(
                         branch_name,
                         "--base",
                         "main",
-                        "--json",
-                        "number,url",
                     ],
                     capture_output=True,
                     text=True,
@@ -665,9 +663,9 @@ def automation(
                 raise AutomationError(f"Failed to create PR: {e.stderr.strip()}") from e
             finally:
                 Path(body_path).unlink(missing_ok=True)
-            pr_data = json.loads(pr_create.stdout)
-            pr_number = str(pr_data["number"])
-            console.print(f"Created PR: [cyan]{pr_data['url']}[/cyan]")
+            pr_url = pr_create.stdout.strip()
+            pr_number = pr_url.rstrip("/").rsplit("/", 1)[-1]
+            console.print(f"Created PR: [cyan]{pr_url}[/cyan]")
 
         label_result = subprocess.run(
             ["gh", "pr", "edit", pr_number, "--add-label", "dependencies"],
