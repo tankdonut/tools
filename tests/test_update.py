@@ -827,7 +827,7 @@ class TestAutomationSkippedDisplay:
                 if "--body-file" in cmd:
                     captured_body = Path(cmd[cmd.index("--body-file") + 1]).read_text()
                 return Mock(
-                    stdout='{"number": 1, "url": "https://github.com/test/repo/pull/1"}\n',
+                    stdout="https://github.com/test/repo/pull/1\n",
                     stderr="",
                     returncode=0,
                 )
