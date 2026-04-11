@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 import time
 from urllib.parse import urlparse
 
@@ -606,42 +607,16 @@ def automation(
             )
 
         # Check for existing open PR
-        pr_check = subprocess.run(
-            [
-                "gh",
-                "pr",
-                "list",
-                "--head",
-                branch_name,
-                "--state",
-                "open",
-                "--json",
-                "number,url",
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        existing_prs = json.loads(pr_check.stdout) if pr_check.stdout.strip() else []
-
-        if existing_prs:
-            pr_number = str(existing_prs[0]["number"])
-            console.print(f"Reusing existing PR: [cyan]{existing_prs[0]['url']}[/cyan]")
-        else:
-            pr_create = subprocess.run(
+        try:
+            pr_check = subprocess.run(
                 [
                     "gh",
                     "pr",
-                    "create",
-                    "--title",
-                    title,
-                    "--body",
-                    body,
+                    "list",
                     "--head",
                     branch_name,
-                    "--base",
-                    "main",
+                    "--state",
+                    "open",
                     "--json",
                     "number,url",
                 ],
@@ -649,18 +624,69 @@ def automation(
                 text=True,
                 check=True,
             )
+        except subprocess.CalledProcessError as e:
+            raise AutomationError(f"Failed to check for existing PRs: {e.stderr.strip()}") from e
+
+        existing_prs = json.loads(pr_check.stdout) if pr_check.stdout.strip() else []
+
+        if existing_prs:
+            pr_number = str(existing_prs[0]["number"])
+            console.print(f"Reusing existing PR: [cyan]{existing_prs[0]['url']}[/cyan]")
+        else:
+            # Write body to temp file to avoid CLI argument length limits
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".md", delete=False, encoding="utf-8"
+            ) as body_file:
+                body_file.write(body)
+                body_path = body_file.name
+
+            try:
+                pr_create = subprocess.run(
+                    [
+                        "gh",
+                        "pr",
+                        "create",
+                        "--title",
+                        title,
+                        "--body-file",
+                        body_path,
+                        "--head",
+                        branch_name,
+                        "--base",
+                        "main",
+                        "--json",
+                        "number,url",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as e:
+                raise AutomationError(f"Failed to create PR: {e.stderr.strip()}") from e
+            finally:
+                Path(body_path).unlink(missing_ok=True)
             pr_data = json.loads(pr_create.stdout)
             pr_number = str(pr_data["number"])
             console.print(f"Created PR: [cyan]{pr_data['url']}[/cyan]")
 
-        # Add dependencies label (ignore failure if label does not exist)
-        subprocess.run(
+        label_result = subprocess.run(
             ["gh", "pr", "edit", pr_number, "--add-label", "dependencies"],
+            capture_output=True,
+            text=True,
             check=False,
         )
+        if label_result.returncode != 0:
+            console.print(
+                f"  [yellow]⚠[/yellow] Failed to add label: {label_result.stderr.strip()}"
+            )
 
-        # Enable auto-merge (respects branch protection rules)
-        subprocess.run(
+        merge_result = subprocess.run(
             ["gh", "pr", "merge", pr_number, "--auto", "--squash", "--delete-branch"],
+            capture_output=True,
+            text=True,
             check=False,
         )
+        if merge_result.returncode != 0:
+            console.print(
+                f"  [yellow]⚠[/yellow] Failed to enable auto-merge: {merge_result.stderr.strip()}"
+            )

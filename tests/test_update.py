@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from tasks.update import (
@@ -814,13 +815,17 @@ class TestAutomationSkippedDisplay:
         mock_check_output.return_value = "1"
 
         gh_commands = []
+        captured_body = None
 
         def mock_run_side_effect(*args, **kwargs):
+            nonlocal captured_body
             cmd = args[0] if args else kwargs.get("args", [])
             gh_commands.append(cmd)
             if "rev-parse" in str(cmd):
                 return Mock(stdout="main\n", stderr="", returncode=0)
             if isinstance(cmd, list) and "pr" in cmd and "create" in cmd:
+                if "--body-file" in cmd:
+                    captured_body = Path(cmd[cmd.index("--body-file") + 1]).read_text()
                 return Mock(
                     stdout='{"number": 1, "url": "https://github.com/test/repo/pull/1"}\n',
                     stderr="",
@@ -836,11 +841,11 @@ class TestAutomationSkippedDisplay:
         pr_create_calls = [
             c for c in gh_commands if isinstance(c, list) and "pr" in c and "create" in c
         ]
-        assert len(pr_create_calls) >= 1, "Expected a PR create command"
+        assert len(pr_create_calls) >= 1, f"Expected a PR create command, got: {gh_commands}"
 
         pr_cmd = pr_create_calls[0]
-        body_idx = pr_cmd.index("--body") + 1
-        body = pr_cmd[body_idx]
+        assert "--body-file" in pr_cmd, f"Expected --body-file in command: {pr_cmd}"
+        assert captured_body is not None, "Body file content was not captured"
 
-        assert "Checked Versions" in body
-        assert "v4.0.0 (2d)" in body
+        assert "Checked Versions" in captured_body
+        assert "v4.0.0 (2d)" in captured_body
