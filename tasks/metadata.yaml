@@ -29,7 +29,7 @@ bd:
 
   repo_url: https://github.com/steveyegge/beads
   license: MIT
-  version: 0.63.3
+  version: 1.0.0
 cr:
   description: >
     CLI tool for linting and testing Helm charts
