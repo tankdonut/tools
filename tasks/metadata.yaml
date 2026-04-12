@@ -200,6 +200,17 @@ solc:
   repo_url: https://github.com/ethereum/solidity
   license: GPL-3.0
   version: 0.8.34
+rtk:
+  description: >
+    High-performance CLI proxy that reduces LLM token consumption by 60-90%
+    on common dev commands
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}-{{rust_arch}}-{{ "apple-darwin" if os == "darwin" else "unknown-linux-musl" if rust_arch == "x86_64" else "unknown-linux-gnu" }}.tar.gz
+
+  repo_url: https://github.com/rtk-ai/rtk
+  license: MIT
+  version: 0.35.0
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
