@@ -217,12 +217,12 @@ Copy `.env.example` to `.env` for local configuration.
 
 GitHub Actions workflows:
 
-| Workflow                    | Trigger                                        | Description                              |
-|-----------------------------|------------------------------------------------|------------------------------------------|
-| `ci.yaml`                   | Push to `main`, pull requests                  | Runs pre-commit hooks (lint, tests)      |
-| `container.yaml`            | Push to `main`, pull requests, manual          | Builds and pushes container to GHCR      |
-| `update.yaml`               | Weekly schedule (Sundays 03:00), manual        | Runs `update.automation` for tool bumps  |
-| `cleanup-ghcr-images.yaml`  | Daily schedule (01:30 UTC), manual             | Removes stale GHCR images                |
+| Workflow                          | Trigger                                        | Description                              |
+|-----------------------------------|------------------------------------------------|------------------------------------------|
+| `lint-and-test.yaml`              | Push to `main`, pull requests                  | Runs pre-commit hooks (lint, tests)      |
+| `build-and-publish-image.yaml`    | Push to `main`, pull requests, manual          | Builds and pushes container to GHCR      |
+| `bump-tool-versions.yaml`         | Weekly schedule (Sundays 03:00), manual        | Runs `update.automation` for tool bumps  |
+| `prune-ghcr-images.yaml`          | Daily schedule (01:30 UTC), manual             | Removes stale GHCR images                |
 
 ## Development
 

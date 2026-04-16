@@ -1,4 +1,4 @@
-name: Cleanup Stale GHCR Images
+name: Prune GHCR Images
 
 on:
   workflow_dispatch: # Allows manual triggering
