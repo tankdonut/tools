@@ -5,11 +5,14 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import tempfile
 import time
 from urllib.parse import urlparse
 
+from dotenv import load_dotenv
+from invoke.context import Context
 from invoke.tasks import task
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jsonschema import validate
@@ -28,12 +31,21 @@ from rich.progress import (
 import semver
 import tenacity
 
-from tasks.lib import METADATA_FILE, METADATA_SCHEMA_FILE, MetadataCache
+from tasks.lib import (
+    METADATA_FILE,
+    METADATA_SCHEMA_FILE,
+    ROOT_DIR,
+    MetadataCache,
+    PackageDownloader,
+    render_template,
+)
 
 # Minimum age in days before a release can be used for updates
 RELEASE_AGE_DAYS = 7
 
 metadata_cache = MetadataCache()
+
+load_dotenv()
 
 
 def _format_checked_versions(checked_versions: list[dict]) -> str:
@@ -418,45 +430,287 @@ def detect_updates(
     return updates, skipped
 
 
-@task(aliases=["a"])
-def tools(c, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS) -> None:
-    """Check and update all tools."""
-    metadata = metadata_cache.get()
-    updates, _skipped = detect_updates(metadata, cooldown=cooldown)
+def check_required_tools(download_url: str) -> None:
+    """Check for required command line tools."""
+    required = {"curl"}
 
-    if not updates:
-        return
+    if download_url.endswith(".zip"):
+        required.add("unzip")
+    elif download_url.endswith((".tar", ".tar.gz", ".tar.bz2", ".tar.xz")):
+        required.add("tar")
+    elif download_url.endswith((".gz", ".bz2")):
+        required.add("gunzip")
 
-    if dry_run:
-        return
-
-    for update in updates:
-        metadata[update["package"]]["version"] = update["to_version"]
-
-    write_metadata(metadata)
-    metadata_cache.clear()
+    for tool in required:
+        if not shutil.which(tool):
+            raise RuntimeError(f"Required tool '{tool}' not found in PATH")
 
 
-@task(aliases=["t"])
-def tool(c, name: str, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS) -> None:
-    """Check and update single tool."""
+def resolve_install_path(local: bool = False, dist: bool = True) -> Path:
+    """Resolve install path based on flags."""
+    if local:
+        home = Path.home()
+        local_bin = home / ".local" / "bin"
+        fallback_bin = home / "bin"
+
+        path_entries = [p for p in os.getenv("PATH", "").split(os.pathsep) if p]
+        normalized_path_entries = {str(Path(p).resolve()) for p in path_entries}
+
+        if local_bin.exists() and str(local_bin.resolve()) in normalized_path_entries:
+            return local_bin
+        else:
+            return fallback_bin
+
+    if dist:
+        return ROOT_DIR / "dist"
+
+    raise ValueError("Either --local or --dist must be specified")
+
+
+def install_single_package(
+    c: Context,
+    name: str,
+    install_path: Path,
+    force: bool = False,
+) -> None:
+    """Install a single tool."""
     metadata = metadata_cache.get()
 
     if name not in metadata:
-        return
+        raise ValueError(f"Tool '{name}' not found in metadata")
 
-    single = {name: metadata[name]}
-    updates, _skipped = detect_updates(single, cooldown=cooldown)
+    package_metadata = metadata[name]
+    download_url = render_template(name, package_metadata, package_metadata["download_url"])
 
-    if not updates:
-        return
+    check_required_tools(download_url)
 
-    if dry_run:
-        return
+    if force and (install_path / name).exists():
+        c.run(f"rm -rvf {install_path}/{name}")
 
-    metadata[name]["version"] = updates[0]["to_version"]
-    write_metadata(metadata)
-    metadata_cache.clear()
+    if (install_path / name).exists():
+        print(f"{name} already installed at {install_path}")
+    else:
+        if not install_path.exists():
+            install_path.mkdir(parents=True, exist_ok=True)
+
+        downloader = PackageDownloader(
+            c,
+            package_name=name,
+            download_url=download_url,
+            install_path=str(install_path),
+            package_exe=package_metadata.get("package_exe", None),
+            binary=package_metadata.get("binary", False),
+        )
+
+        downloader.download()
+
+
+@task
+def update(
+    c,
+    name: str = "",
+    pr: bool = False,
+    dry_run: bool = False,
+    cooldown: int = RELEASE_AGE_DAYS,
+) -> None:
+    """Check and update tools. Use --name for single tool, --pr for PR automation."""
+    console = Console()
+    metadata = metadata_cache.get()
+
+    if name:
+        if name not in metadata:
+            return
+        check_data = {name: metadata[name]}
+    else:
+        check_data = metadata
+
+    updates, skipped = detect_updates(check_data, cooldown=cooldown)
+
+    if pr:
+        if not updates and not skipped:
+            console.print("No updates found.")
+            return
+
+        if not updates:
+            console.print("No updates found, but some releases were skipped:")
+            for s in skipped:
+                chain_str = ""
+                if "checked_versions" in s:
+                    chain_str = f" (walked: {_format_checked_versions(s['checked_versions'])})"
+                console.print(
+                    f"  [yellow]⏭[/yellow] {s['package']}: {s['current_version']} → "
+                    f"{s['skipped_version']} ({s['reason']}){chain_str}"
+                )
+            return
+
+        branch_name = f"automation/update-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}"
+
+        if dry_run:
+            console.print("[bold]Dry run mode enabled.[/bold]")
+            console.print(f"Would create branch: [cyan]{branch_name}[/cyan]")
+            console.print("Would commit: [cyan]chore: update tools[/cyan]")
+            console.print(
+                f"Would create PR targeting [cyan]'main'[/cyan] with {len(updates)} update(s)."
+            )
+            return
+
+        with ensure_clean_checkout():
+            for u in updates:
+                metadata[u["package"]]["version"] = u["to_version"]
+
+            write_metadata(metadata)
+            metadata_cache.clear()
+
+            # Checkout existing branch or create a new one
+            branch_exists = safe_git_command("branch", "--list", branch_name).stdout.strip()
+
+            if branch_exists:
+                safe_git_command("checkout", branch_name)
+            else:
+                safe_git_command("checkout", "-b", branch_name)
+
+            safe_git_command("add", str(METADATA_FILE))
+            safe_git_command("commit", "-m", "chore: update tools")
+            safe_git_command("push", "-u", "origin", branch_name)
+
+            count = len(updates)
+
+            if count <= 3:
+                parts = [
+                    f"{u['package']} ({u['from_version']} → {u['to_version']})" for u in updates
+                ]
+                title = f"chore: update {', '.join(parts)}"
+            else:
+                first = ", ".join(u["package"] for u in updates[:3])
+                title = f"chore: update {first} +{count - 3} more"
+
+            pretty_json = json.dumps(updates, indent=2)
+
+            body = (
+                "Automated weekly package updates.\n\n"
+                f"{count} package(s) updated.\n\n"
+                "<details>\n"
+                "<summary>Updated Packages (click to expand)</summary>\n\n"
+                "```json\n"
+                f"{pretty_json}\n"
+                "```\n\n"
+                "</details>"
+            )
+
+            if skipped:
+                skip_lines = [
+                    "| Package | Current | Skipped | Reason | Checked Versions |",
+                    "|---|---|---|---|---|",
+                ]
+                for s in skipped:
+                    chain = _format_checked_versions(s.get("checked_versions", []))
+                    skip_lines.append(
+                        f"| {s['package']} | {s['current_version']} "
+                        f"| {s['skipped_version']} | {s['reason']} | {chain} |"
+                    )
+                skip_table = "\n".join(skip_lines)
+                body += (
+                    "\n\n<details>\n"
+                    "<summary>Skipped Releases (click to expand)</summary>\n\n"
+                    f"{skip_table}\n\n"
+                    "</details>"
+                )
+
+            # Check for existing open PR
+            try:
+                pr_check = subprocess.run(
+                    [
+                        "gh",
+                        "pr",
+                        "list",
+                        "--head",
+                        branch_name,
+                        "--state",
+                        "open",
+                        "--json",
+                        "number,url",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as e:
+                raise AutomationError(
+                    f"Failed to check for existing PRs: {e.stderr.strip()}"
+                ) from e
+
+            existing_prs = json.loads(pr_check.stdout) if pr_check.stdout.strip() else []
+
+            if existing_prs:
+                pr_number = str(existing_prs[0]["number"])
+                console.print(f"Reusing existing PR: [cyan]{existing_prs[0]['url']}[/cyan]")
+            else:
+                # Write body to temp file to avoid CLI argument length limits
+                with tempfile.NamedTemporaryFile(
+                    mode="w", suffix=".md", delete=False, encoding="utf-8"
+                ) as body_file:
+                    body_file.write(body)
+                    body_path = body_file.name
+
+                try:
+                    pr_create = subprocess.run(
+                        [
+                            "gh",
+                            "pr",
+                            "create",
+                            "--title",
+                            title,
+                            "--body-file",
+                            body_path,
+                            "--head",
+                            branch_name,
+                            "--base",
+                            "main",
+                        ],
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                    )
+                except subprocess.CalledProcessError as e:
+                    raise AutomationError(f"Failed to create PR: {e.stderr.strip()}") from e
+                finally:
+                    Path(body_path).unlink(missing_ok=True)
+                pr_url = pr_create.stdout.strip()
+                pr_number = pr_url.rstrip("/").rsplit("/", 1)[-1]
+                console.print(f"Created PR: [cyan]{pr_url}[/cyan]")
+
+            label_result = subprocess.run(
+                ["gh", "pr", "edit", pr_number, "--add-label", "dependencies"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if label_result.returncode != 0:
+                console.print(
+                    f"  [yellow]⚠[/yellow] Failed to add label: {label_result.stderr.strip()}"
+                )
+
+            merge_result = subprocess.run(
+                ["gh", "pr", "merge", pr_number, "--auto", "--squash", "--delete-branch"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if merge_result.returncode != 0:
+                msg = merge_result.stderr.strip()
+                console.print(f"  [yellow]⚠[/yellow] Failed to enable auto-merge: {msg}")
+    else:
+        if not updates:
+            return
+
+        if dry_run:
+            return
+
+        for u in updates:
+            metadata[u["package"]]["version"] = u["to_version"]
+
+        write_metadata(metadata)
+        metadata_cache.clear()
 
 
 @task
@@ -510,181 +764,20 @@ def add(
 
 
 @task
-def automation(
-    c, ci: bool = False, dry_run: bool = False, cooldown: int = RELEASE_AGE_DAYS
+def install(
+    c: Context,
+    name: str = "",
+    local: bool = False,
+    dist: bool = True,
+    force: bool = False,
 ) -> None:
-    """Run full update automation with PR creation and auto-merge."""
+    """Install tools to dist or local."""
+    install_path = resolve_install_path(local=local, dist=dist)
 
-    console = Console()
-    metadata = metadata_cache.get()
-    updates, skipped = detect_updates(metadata, cooldown=cooldown)
-
-    if not updates and not skipped:
-        console.print("No updates found.")
-        return
-
-    if not updates:
-        console.print("No updates found, but some releases were skipped:")
-        for s in skipped:
-            chain_str = ""
-            if "checked_versions" in s:
-                chain_str = f" (walked: {_format_checked_versions(s['checked_versions'])})"
-            console.print(
-                f"  [yellow]⏭[/yellow] {s['package']}: {s['current_version']} → "
-                f"{s['skipped_version']} ({s['reason']}){chain_str}"
-            )
-        return
-
-    branch_name = f"automation/update-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}"
-
-    if dry_run:
-        console.print("[bold]Dry run mode enabled.[/bold]")
-        console.print(f"Would create branch: [cyan]{branch_name}[/cyan]")
-        console.print("Would commit: [cyan]chore: update tools[/cyan]")
-        console.print(
-            f"Would create PR targeting [cyan]'main'[/cyan] with {len(updates)} update(s)."
-        )
-        return
-
-    with ensure_clean_checkout():
-        for update in updates:
-            metadata[update["package"]]["version"] = update["to_version"]
-
-        write_metadata(metadata)
+    if name:
+        install_single_package(c, name, install_path, force=force)
+    else:
+        metadata = metadata_cache.get()
+        for package_id in metadata:
+            install_single_package(c, package_id, install_path, force=force)
         metadata_cache.clear()
-
-        # Checkout existing branch or create a new one
-        branch_exists = safe_git_command("branch", "--list", branch_name).stdout.strip()
-
-        if branch_exists:
-            safe_git_command("checkout", branch_name)
-        else:
-            safe_git_command("checkout", "-b", branch_name)
-
-        safe_git_command("add", str(METADATA_FILE))
-        safe_git_command("commit", "-m", "chore: update tools")
-        safe_git_command("push", "-u", "origin", branch_name)
-
-        count = len(updates)
-
-        if count <= 3:
-            parts = [f"{u['package']} ({u['from_version']} → {u['to_version']})" for u in updates]
-            title = f"chore: update {', '.join(parts)}"
-        else:
-            first = ", ".join(u["package"] for u in updates[:3])
-            title = f"chore: update {first} +{count - 3} more"
-
-        pretty_json = json.dumps(updates, indent=2)
-
-        body = (
-            "Automated weekly package updates.\n\n"
-            f"{count} package(s) updated.\n\n"
-            "<details>\n"
-            "<summary>Updated Packages (click to expand)</summary>\n\n"
-            "```json\n"
-            f"{pretty_json}\n"
-            "```\n\n"
-            "</details>"
-        )
-
-        if skipped:
-            skip_lines = [
-                "| Package | Current | Skipped | Reason | Checked Versions |",
-                "|---|---|---|---|---|",
-            ]
-            for s in skipped:
-                chain = _format_checked_versions(s.get("checked_versions", []))
-                skip_lines.append(
-                    f"| {s['package']} | {s['current_version']} "
-                    f"| {s['skipped_version']} | {s['reason']} | {chain} |"
-                )
-            skip_table = "\n".join(skip_lines)
-            body += (
-                "\n\n<details>\n"
-                "<summary>Skipped Releases (click to expand)</summary>\n\n"
-                f"{skip_table}\n\n"
-                "</details>"
-            )
-
-        # Check for existing open PR
-        try:
-            pr_check = subprocess.run(
-                [
-                    "gh",
-                    "pr",
-                    "list",
-                    "--head",
-                    branch_name,
-                    "--state",
-                    "open",
-                    "--json",
-                    "number,url",
-                ],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-        except subprocess.CalledProcessError as e:
-            raise AutomationError(f"Failed to check for existing PRs: {e.stderr.strip()}") from e
-
-        existing_prs = json.loads(pr_check.stdout) if pr_check.stdout.strip() else []
-
-        if existing_prs:
-            pr_number = str(existing_prs[0]["number"])
-            console.print(f"Reusing existing PR: [cyan]{existing_prs[0]['url']}[/cyan]")
-        else:
-            # Write body to temp file to avoid CLI argument length limits
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".md", delete=False, encoding="utf-8"
-            ) as body_file:
-                body_file.write(body)
-                body_path = body_file.name
-
-            try:
-                pr_create = subprocess.run(
-                    [
-                        "gh",
-                        "pr",
-                        "create",
-                        "--title",
-                        title,
-                        "--body-file",
-                        body_path,
-                        "--head",
-                        branch_name,
-                        "--base",
-                        "main",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-            except subprocess.CalledProcessError as e:
-                raise AutomationError(f"Failed to create PR: {e.stderr.strip()}") from e
-            finally:
-                Path(body_path).unlink(missing_ok=True)
-            pr_url = pr_create.stdout.strip()
-            pr_number = pr_url.rstrip("/").rsplit("/", 1)[-1]
-            console.print(f"Created PR: [cyan]{pr_url}[/cyan]")
-
-        label_result = subprocess.run(
-            ["gh", "pr", "edit", pr_number, "--add-label", "dependencies"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if label_result.returncode != 0:
-            console.print(
-                f"  [yellow]⚠[/yellow] Failed to add label: {label_result.stderr.strip()}"
-            )
-
-        merge_result = subprocess.run(
-            ["gh", "pr", "merge", pr_number, "--auto", "--squash", "--delete-branch"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if merge_result.returncode != 0:
-            console.print(
-                f"  [yellow]⚠[/yellow] Failed to enable auto-merge: {merge_result.stderr.strip()}"
-            )

@@ -34,13 +34,13 @@ Keep changes easy to understand and easy to revert.
 
 ### Task Execution
 
-- `uv run inv install --name <tool> --dist` - Install single tool to dist
-- `uv run inv install --local` - Install all tools to ~/.local/bin (or ~/bin)
-- `uv run inv install --name <tool> --local` - Install single tool to ~/.local/bin
-- `uv run inv install --force` - Force reinstall all tools
-- `uv run inv install --name <tool> --force` - Force reinstall single tool
-- `uv run inv update.tools` - Update all tools to latest releases
-- `uv run inv update.tool --name <tool>` - Update single tool
+- `uv run inv tools.install --name <tool> --dist` - Install single tool to dist
+- `uv run inv tools.install --local` - Install all tools to ~/.local/bin (or ~/bin)
+- `uv run inv tools.install --name <tool> --local` - Install single tool to ~/.local/bin
+- `uv run inv tools.install --force` - Force reinstall all tools
+- `uv run inv tools.install --name <tool> --force` - Force reinstall single tool
+- `uv run inv tools.update` - Update all tools to latest releases
+- `uv run inv tools.update --name <tool>` - Update single tool
 
 ---
 

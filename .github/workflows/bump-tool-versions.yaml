@@ -38,10 +38,10 @@ jobs:
 
       - name: Run Update Automation
         run: |
-          ARGS="--ci"
+          ARGS="--pr"
           if [ "${{ inputs.force }}" = "true" ]; then
             ARGS="$ARGS --cooldown 0"
           fi
-          uv run invoke update.automation $ARGS
+          uv run invoke tools.update $ARGS
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
