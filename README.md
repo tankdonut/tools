@@ -32,37 +32,37 @@ uv run inv --list
 Install all tools to `dist/` (default):
 
 ```bash
-uv run inv install
+uv run inv tools.install
 ```
 
 Install a single tool to `dist/`:
 
 ```bash
-uv run inv install --name <tool>
+uv run inv tools.install --name <tool>
 ```
 
 Install all tools to `~/.local/bin` (or `~/bin`):
 
 ```bash
-uv run inv install --local
+uv run inv tools.install --local
 ```
 
 Install a single tool to `~/.local/bin`:
 
 ```bash
-uv run inv install --name <tool> --local
+uv run inv tools.install --name <tool> --local
 ```
 
 Force reinstall all tools:
 
 ```bash
-uv run inv install --force
+uv run inv tools.install --force
 ```
 
 Force reinstall a single tool:
 
 ```bash
-uv run inv install --name <tool> --force
+uv run inv tools.install --name <tool> --force
 ```
 
 The install task:
@@ -73,10 +73,10 @@ The install task:
 
 ## Adding a New Tool
 
-Add a new entry to `tasks/metadata.yaml` using the `update.add` task:
+Add a new entry to `tasks/metadata.yaml` using the `tools.add` task:
 
 ```bash
-uv run inv update.add \
+uv run inv tools.add \
   --repo-url https://github.com/owner/repo \
   --download-url "{{repo_url}}/releases/download/v{{version}}/{{name}}-{{os}}-{{arch}}" \
   --license MIT \
@@ -104,27 +104,27 @@ This task:
 Update all tools to their latest GitHub release:
 
 ```bash
-uv run inv update.tools
+uv run inv tools.update
 ```
 
 Update a single tool:
 
 ```bash
-uv run inv update.tool --name <tool>
+uv run inv tools.update --name <tool>
 ```
 
 Preview updates without writing changes:
 
 ```bash
-uv run inv update.tools --dry-run
-uv run inv update.tool --name <tool> --dry-run
+uv run inv tools.update --dry-run
+uv run inv tools.update --name <tool> --dry-run
 ```
 
 Adjust the release age filter (default is 7 days):
 
 ```bash
-uv run inv update.tools --cooldown 14
-uv run inv update.tool --name <tool> --cooldown 14
+uv run inv tools.update --cooldown 14
+uv run inv tools.update --name <tool> --cooldown 14
 ```
 
 These commands:
@@ -135,17 +135,17 @@ These commands:
 - Skip releases younger than the cooldown period
 - Preserve strict alphanumeric ordering
 
-## Automation
+### Automated Updates with PRs
 
-Run full update automation with automatic PR creation and auto-merge:
+Run updates with automatic PR creation and auto-merge:
 
 ```bash
-uv run inv update.automation
+uv run inv tools.update --pr
 ```
 
 Options:
 
-- `--ci` — Indicates execution in a CI environment
+- `--pr` — Create a pull request and auto-merge after approval
 - `--dry-run` — Preview actions without making changes
 - `--cooldown` — Release age filter in days (default: 7)
 
@@ -221,7 +221,7 @@ GitHub Actions workflows:
 |-----------------------------------|------------------------------------------------|------------------------------------------|
 | `lint-and-test.yaml`              | Push to `main`, pull requests                  | Runs pre-commit hooks (lint, tests)      |
 | `build-and-publish-image.yaml`    | Push to `main`, pull requests, manual          | Builds and pushes container to GHCR      |
-| `bump-tool-versions.yaml`         | Weekly schedule (Sundays 03:00), manual        | Runs `update.automation` for tool bumps  |
+| `bump-tool-versions.yaml`         | Weekly schedule (Sundays 03:00), manual        | Runs `tools.update --pr` for tool bumps   |
 | `prune-ghcr-images.yaml`          | Daily schedule (01:30 UTC), manual             | Removes stale GHCR images                |
 
 ## Development
