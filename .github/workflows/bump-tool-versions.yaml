@@ -2,6 +2,11 @@ name: Bump Tool Versions
 
 on:
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Bypass release age cooldown"
+        type: boolean
+        default: false
   schedule:
     - cron: "0 3 * * 0"
 
@@ -32,6 +37,11 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Run Update Automation
-        run: uv run invoke update.automation --ci
+        run: |
+          ARGS="--ci"
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ARGS="$ARGS --cooldown 0"
+          fi
+          uv run invoke update.automation $ARGS
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
