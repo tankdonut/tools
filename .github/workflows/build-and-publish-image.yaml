@@ -1,4 +1,4 @@
-name: Container
+name: Build & Publish Image
 
 on:
   workflow_dispatch:
