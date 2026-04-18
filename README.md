@@ -161,6 +161,33 @@ This task:
 
 A scheduled GitHub Actions workflow runs this weekly (Sundays at 03:00 UTC).
 
+## SHA256 Integrity Verification
+
+When a `sha256` field is present in a tool's metadata, the install task
+verifies the downloaded file against the expected hash before extraction.
+If the hash doesn't match, the download is deleted and an `IntegrityError`
+is raised. Tools without a `sha256` field install as before with no
+verification.
+
+Fetch SHA256 digests for all tools:
+
+```bash
+uv run inv tools.digests
+```
+
+Fetch a digest for a single tool:
+
+```bash
+uv run inv tools.digests --name <tool>
+```
+
+The `tools.digests` task populates `sha256` values by:
+
+- Querying the GitHub Release Asset API `digest` field first
+- Falling back to checksum files (checksums.txt, SHA256SUMS, etc.) in release assets
+- Using special handling for HashiCorp tools (releases.hashicorp.com)
+- Skipping asdf (only MD5 available)
+
 ## Container Image
 
 Build a container image with all tools pre-installed:

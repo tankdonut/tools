@@ -10,6 +10,7 @@ argocd:
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
   version: 3.3.7
+  sha256: c8e11cb7f4584d9bb1880257e083983eb62359f4a30566cb626c536adf4d76d9
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -30,6 +31,7 @@ bd:
   repo_url: https://github.com/steveyegge/beads
   license: MIT
   version: 1.0.2
+  sha256: 66280bca14581218684027fee000810c2e40a9c6fe00e876ff64bdcb01a036c0
 cr:
   description: >
     CLI tool for linting and testing Helm charts
@@ -40,6 +42,7 @@ cr:
   repo_url: https://github.com/helm/chart-releaser
   license: APACHE-2.0
   version: 1.8.1
+  sha256: 834046b27b00cd6ba451326875c1937d4f2b671063c2053e031434ade73002b5
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -50,6 +53,7 @@ ct:
   repo_url: https://github.com/helm/chart-testing
   license: APACHE-2.0
   version: 3.14.0
+  sha256: d16f0583616885423826241164ce1f6589c6fe5332fa74f374ebd2bd3cb3fe1f
 ctlptl:
   description: >
     Making local Kubernetes clusters fun and easy to set up
@@ -60,6 +64,7 @@ ctlptl:
   repo_url: https://github.com/tilt-dev/ctlptl
   license: APACHE-2.0
   version: 0.9.2
+  sha256: 7f3e996d1ccb81a64acb475500b497a2586f0f41e926461c924b8194c668e874
 doctl:
   description: >
     A command line tool for DigitalOcean services
@@ -70,6 +75,7 @@ doctl:
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
   version: 1.155.0
+  sha256: 94f572c89d74a6a894f6238bae07cd55c599a6539f8da7ec9d1a89f09a292180
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -80,6 +86,7 @@ exo:
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
   version: 1.94.0
+  sha256: 2a70bd5f1554c0af81cb0758ce9cc07765efb6aa2194712d0c45a84f0b15a87b
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -90,6 +97,7 @@ flux:
   repo_url: https://github.com/fluxcd/flux2
   license: APACHE-2.0
   version: 2.8.5
+  sha256: 63c178ba938a5443265b2ce02691c005acf4ef6188d4dbb9b9d87333558948c4
 helm-docs:
   description: >
     A tool for automatically generating markdown documentation for helm charts
@@ -100,6 +108,7 @@ helm-docs:
   repo_url: https://github.com/norwoodj/helm-docs
   license: GPL-3.0
   version: 1.14.2
+  sha256: a8cf72ada34fad93285ba2a452b38bdc5bd52cc9a571236244ec31022928d6cc
 k3d:
   description: >
     Little helper to run CNCF's k3s in Docker
@@ -110,6 +119,7 @@ k3d:
   repo_url: https://github.com/k3d-io/k3d
   license: MIT
   version: 5.8.3
+  sha256: dbaa79a76ace7f4ca230a1ff41dc7d8a5036a8ad0309e9c54f9bf3836dbe853e
 k3s:
   description: >
     Lightweight Kubernetes
@@ -120,6 +130,7 @@ k3s:
   repo_url: https://github.com/k3s-io/k3s
   license: APACHE-2.0
   version: 1.35.3
+  sha256: e8661b03d0004e5792da6c2aae7f05de4c54711ee4228d0cce28e02c404626a6
 k9s:
   description: >
     🐶 Kubernetes CLI To Manage Your Clusters In Style!
@@ -130,6 +141,7 @@ k9s:
   repo_url: https://github.com/derailed/k9s
   license: APACHE-2.0
   version: 0.50.18
+  sha256: 0b697ed4aa80997f7de4deeed6f1fba73df191b28bf691b1f28d2f45fa2a9e9b
 kind:
   description: >
     A tool for running local Kubernetes clusters using Docker
@@ -140,6 +152,7 @@ kind:
   repo_url: https://github.com/kubernetes-sigs/kind
   license: MIT
   version: 0.31.0
+  sha256: eb244cbafcc157dff60cf68693c14c9a75c4e6e6fedaf9cd71c58117cb93e3fa
 kustomize:
   description: >
     Customization of kubernetes YAML configurations
@@ -150,6 +163,7 @@ kustomize:
   repo_url: https://github.com/kubernetes-sigs/kustomize
   license: APACHE-2.0
   version: 5.8.1
+  sha256: 029a7f0f4e1932c52a0476cf02a0fd855c0bb85694b82c338fc648dcb53a819d
 opencode:
   description: >
     The open source coding agent.
@@ -160,6 +174,7 @@ opencode:
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
   version: 1.4.11
+  sha256: a4ea829ebe3d4afba52bbf039baf2546aa098c4e5411d5f19487d8ef9bd9f68c
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -170,6 +185,7 @@ packer:
   repo_url: https://github.com/hashicorp/packer
   license: MPL-2.0
   version: 1.15.1
+  sha256: 648d704bec73805a5508ed612185a9e5858ca7d57b730b88b1a54c3af3a91f5f
 shellcheck:
   description: >
     ShellCheck, a static analysis tool for shell scripts
@@ -180,6 +196,7 @@ shellcheck:
   repo_url: https://github.com/koalaman/shellcheck
   license: GPL-3.0
   version: 0.11.0
+  sha256: 8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
 skaffold:
   description: >
     Easy and Repeatable Kubernetes Development
@@ -190,6 +207,7 @@ skaffold:
   repo_url: https://github.com/GoogleContainerTools/skaffold
   license: APACHE-2.0
   version: 2.18.3
+  sha256: d8bfce071e3e3096736f12f0233d24f16d4baedaadd2181e1eaa1865a346ec3f
 solc:
   description: >
     Solidity, the Smart Contract Programming Language
@@ -200,6 +218,7 @@ solc:
   repo_url: https://github.com/ethereum/solidity
   license: GPL-3.0
   version: 0.8.34
+  sha256: d40adc6f9fdbb22a97d32a02fa05688bf2ee7886affc48c9851b0afd4a726b39
 rtk:
   description: >
     High-performance CLI proxy that reduces LLM token consumption by 60-90% on common dev commands
@@ -210,6 +229,7 @@ rtk:
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
   version: 0.37.1
+  sha256: f9aa033ec7146e552457f6231d706c0c42e5fdb77d836bc4c98ae24b2930d33e
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
@@ -220,6 +240,7 @@ starship:
   repo_url: https://github.com/starship/starship
   license: ICS
   version: 1.25.0
+  sha256: 025a6540717a20d2545410c0108caf216a6a14ab2cce91a473d91ed42762bc6b
 terraform:
   description: >
     Terraform is a tool for building, changing, and combining infrastructure safely and efficiently.
@@ -230,6 +251,7 @@ terraform:
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
   version: 1.14.8
+  sha256: 56a5d12f47cbc1c6bedb8f5426ae7d5df984d1929572c24b56f4c82e9f9bf709
 terraform-docs:
   description: >
     Generate docs from terraform modules
@@ -240,6 +262,7 @@ terraform-docs:
   repo_url: https://github.com/segmentio/terraform-docs
   license: MIT
   version: 0.22.0
+  sha256: 8ec66616777c66f3e622af4f2853e8ae399f38908ad4b262c9c526dd42501369
 terragrunt:
   description: >
     Terragrunt is a thin wrapper for Terraform that provides extra tools for working with multiple Terraform modules.
@@ -250,6 +273,7 @@ terragrunt:
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
   version: 1.0.1
+  sha256: 8108fc7e8535a379413e41f12b310a9dae3327097ab729ba0cb46f62de357f06
 tflint:
   description: >
     A Pluggable Terraform Linter
@@ -260,6 +284,7 @@ tflint:
   repo_url: https://github.com/terraform-linters/tflint
   license: MPL 2.0
   version: 0.61.0
+  sha256: ca4e4e8cb7cc3436f2b6979e9c4fd4e2623a66fcca1ad1fe12f8669967636ae2
 tilt:
   description: >
     Define your dev environment as code. For microservice apps on Kubernetes.
@@ -270,3 +295,4 @@ tilt:
   repo_url: https://github.com/tilt-dev/tilt
   license: APACHE-2.0
   version: 0.37.1
+  sha256: 38e8e353380f57c03124c2a1ba0728481c728027ac664c1b27a6bdb57f23bf07
