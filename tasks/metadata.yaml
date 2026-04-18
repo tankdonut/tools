@@ -229,6 +229,7 @@ rtk:
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
   version: 0.37.1
+  sha256: f9aa033ec7146e552457f6231d706c0c42e5fdb77d836bc4c98ae24b2930d33e
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
