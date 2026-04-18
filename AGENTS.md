@@ -41,6 +41,8 @@ Keep changes easy to understand and easy to revert.
 - `uv run inv tools.install --name <tool> --force` - Force reinstall single tool
 - `uv run inv tools.update` - Update all tools to latest releases
 - `uv run inv tools.update --name <tool>` - Update single tool
+- `uv run inv tools.digests` - Fetch SHA256 digests for all tools from GitHub releases
+- `uv run inv tools.digests --name <tool>` - Fetch SHA256 digest for a single tool
 
 ---
 
