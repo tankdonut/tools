@@ -9,4 +9,7 @@
   repo_url: {{ data.repo_url }}
   license: {{ data.license }}
   version: {{ data.version }}
+{% if data.sha256 is defined %}
+  sha256: {{ data.sha256 }}
+{% endif %}
 {% endfor %}

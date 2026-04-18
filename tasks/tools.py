@@ -500,6 +500,7 @@ def install_single_package(
             install_path=str(install_path),
             package_exe=package_metadata.get("package_exe", None),
             binary=package_metadata.get("binary", False),
+            sha256=package_metadata.get("sha256"),
         )
 
         downloader.download()

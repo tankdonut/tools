@@ -33,6 +33,10 @@
       "version": {
         "type": "string",
         "description": "Version string of the tool to install or reference (e.g. semantic version)."
+      },
+      "sha256": {
+        "type": "string",
+        "description": "SHA256 hex digest of the downloaded artifact for integrity verification."
       }
     },
     "additionalProperties": false
