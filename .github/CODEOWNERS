@@ -1,3 +1,4 @@
-# These owners will be the default owners for everything in the repo.
-# Unless a later match takes precedence, @tankdonut will be requested for review.
+# These owners will be requested to review when a pull request is opened.
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
 * @tankdonut
