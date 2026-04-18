@@ -9,7 +9,7 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.3.6
+  version: 3.3.7
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -69,7 +69,7 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.154.0
+  version: 1.155.0
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -159,7 +159,7 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.4.6
+  version: 1.4.11
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -209,7 +209,7 @@ rtk:
 
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
-  version: 0.36.0
+  version: 0.37.0
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
@@ -219,7 +219,7 @@ starship:
 
   repo_url: https://github.com/starship/starship
   license: ICS
-  version: 1.24.2
+  version: 1.25.0
 terraform:
   description: >
     Terraform is a tool for building, changing, and combining infrastructure safely and efficiently.
