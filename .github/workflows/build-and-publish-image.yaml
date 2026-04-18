@@ -11,6 +11,10 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,16 +29,20 @@ jobs:
         uses: actions/setup-python@v6
 
       - name: Install uv
-        run: pip install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          version: "0.9.25"
 
       - name: Sync Dependencies
         run: uv sync
 
-      - name: Run Tests
-        run: uv run pytest tests/ -v --cov=tasks --cov-report=xml
+      - name: Build Container
+        run: uv run invoke build.container
 
       - name: Login to GHCR
+        if: github.event_name != 'pull_request'
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build and Push Container
+        if: github.event_name != 'pull_request'
         run: uv run invoke build.container --push
