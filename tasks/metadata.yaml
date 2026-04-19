@@ -174,7 +174,7 @@ opencode:
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
   version: 1.14.18
-  sha256: a4ea829ebe3d4afba52bbf039baf2546aa098c4e5411d5f19487d8ef9bd9f68c
+  sha256: 1f1b67377b898f477692879318232fae56dbcb9cff9358cb16a60f9580f475a7
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
