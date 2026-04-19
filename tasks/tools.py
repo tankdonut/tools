@@ -432,6 +432,48 @@ def detect_updates(
     return updates, skipped
 
 
+def _update_sha256_for_updates(
+    metadata: dict, updates: list[dict], console: Console | None = None
+) -> None:
+    """Fetch and set SHA256 digests for updated packages."""
+    if console is None:
+        console = Console()
+
+    for u in updates:
+        pkg_name = u["package"]
+        pkg_meta = metadata[pkg_name]
+        version = pkg_meta.get("version")
+        repo_url = pkg_meta.get("repo_url")
+
+        if not version or not repo_url:
+            continue
+
+        if pkg_name == "asdf":
+            continue
+
+        owner, repo = get_owner_and_repo(repo_url)
+        if not owner or not repo:
+            continue
+
+        resolved_url = render_download_url_for_linux_amd64(pkg_name, pkg_meta)
+        asset_filename = resolved_url.rsplit("/", 1)[-1] if "/" in resolved_url else resolved_url
+
+        sha256 = fetch_asset_digest(
+            owner=owner,
+            repo=repo,
+            version=version,
+            asset_filename=asset_filename,
+            tool_name=pkg_name,
+            package_metadata=pkg_meta,
+        )
+
+        if sha256:
+            pkg_meta["sha256"] = sha256
+            console.print(f"  [green]sha256[/green] {pkg_name}: {sha256[:16]}...")
+        else:
+            console.print(f"  [yellow]sha256[/yellow] {pkg_name}: digest not found")
+
+
 def check_required_tools(download_url: str) -> None:
     """Check for required command line tools."""
     required = {"curl"}
@@ -560,6 +602,8 @@ def update(
         with ensure_clean_checkout():
             for u in updates:
                 metadata[u["package"]]["version"] = u["to_version"]
+
+            _update_sha256_for_updates(metadata, updates, console)
 
             write_metadata(metadata)
             metadata_cache.clear()
@@ -711,6 +755,8 @@ def update(
 
         for u in updates:
             metadata[u["package"]]["version"] = u["to_version"]
+
+        _update_sha256_for_updates(metadata, updates)
 
         write_metadata(metadata)
         metadata_cache.clear()
