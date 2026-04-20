@@ -1,8 +1,10 @@
-import json
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+from tasks.lib import extract_semver_from_tag
 from tasks.tools import (
+    GitHubRateLimitError,
     detect_updates,
     get_latest_github_release_version,
     get_owner_and_repo,
@@ -291,39 +293,38 @@ class TestReleaseAgeFilter:
 class TestGetPreviousGitHubReleases:
     """Test get_previous_github_releases function."""
 
-    @patch("tasks.tools.subprocess.run")
-    def test_success(self, mock_run):
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout=json.dumps(
-                [
-                    {
-                        "tagName": "v2.0.0",
-                        "publishedAt": "2025-01-15T00:00:00Z",
-                        "isDraft": False,
-                        "isPrerelease": False,
-                    },
-                    {
-                        "tagName": "v1.9.0",
-                        "publishedAt": "2025-01-10T00:00:00Z",
-                        "isDraft": False,
-                        "isPrerelease": False,
-                    },
-                    {
-                        "tagName": "v1.8.0",
-                        "publishedAt": "2025-01-05T00:00:00Z",
-                        "isDraft": True,
-                        "isPrerelease": False,
-                    },
-                    {
-                        "tagName": "v1.7.0",
-                        "publishedAt": "2025-01-01T00:00:00Z",
-                        "isDraft": False,
-                        "isPrerelease": True,
-                    },
-                ]
-            ),
-        )
+    @patch("tasks.tools.requests.get")
+    def test_success(self, mock_get):
+        """Successful API call returns non-draft, non-prerelease releases."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {
+                "tag_name": "v2.0.0",
+                "published_at": "2025-01-15T00:00:00Z",
+                "draft": False,
+                "prerelease": False,
+            },
+            {
+                "tag_name": "v1.9.0",
+                "published_at": "2025-01-10T00:00:00Z",
+                "draft": False,
+                "prerelease": False,
+            },
+            {
+                "tag_name": "v1.8.0",
+                "published_at": "2025-01-05T00:00:00Z",
+                "draft": True,
+                "prerelease": False,
+            },
+            {
+                "tag_name": "v1.7.0",
+                "published_at": "2025-01-01T00:00:00Z",
+                "draft": False,
+                "prerelease": True,
+            },
+        ]
+        mock_get.return_value = mock_response
 
         result = get_previous_github_releases("test", "repo")
 
@@ -331,33 +332,77 @@ class TestGetPreviousGitHubReleases:
         assert result[0] == ("v2.0.0", "2025-01-15T00:00:00Z")
         assert result[1] == ("v1.9.0", "2025-01-10T00:00:00Z")
 
-    @patch("tasks.tools.subprocess.run")
-    def test_empty_releases(self, mock_run):
-        mock_run.return_value = Mock(returncode=0, stdout="[]")
+    @patch("tasks.tools.requests.get")
+    def test_empty_releases(self, mock_get):
+        """Empty list from API returns empty list."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = []
+        mock_get.return_value = mock_response
 
         result = get_previous_github_releases("test", "repo")
 
         assert result == []
 
-    @patch("tasks.tools.subprocess.run")
-    def test_non_zero_exit_returns_empty(self, mock_run):
-        mock_run.return_value = Mock(returncode=1, stdout="", stderr="error")
+    @patch("tasks.tools.requests.get")
+    def test_non_200_returns_empty(self, mock_get):
+        """Non-200 status code returns empty list."""
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_get.return_value = mock_response
 
         result = get_previous_github_releases("test", "repo")
 
         assert result == []
 
-    @patch("tasks.tools.subprocess.run")
-    def test_invalid_json_returns_empty(self, mock_run):
-        mock_run.return_value = Mock(returncode=0, stdout="not json")
+    @patch("tasks.tools.requests.get")
+    def test_invalid_json_raises_value_error(self, mock_get):
+        """Response with invalid JSON raises ValueError (propagated from response.json())."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.side_effect = ValueError("bad json")
+        mock_get.return_value = mock_response
 
-        result = get_previous_github_releases("test", "repo")
-
-        assert result == []
+        with pytest.raises(ValueError, match="bad json"):
+            get_previous_github_releases("test", "repo")
 
     def test_empty_owner_returns_empty(self):
+        """Empty owner returns empty list without making API call."""
         result = get_previous_github_releases("", "repo")
         assert result == []
+
+    @patch("tasks.tools.requests.get")
+    def test_rate_limit_403_raises(self, mock_get):
+        """HTTP 403 with rate limit remaining=0 raises GitHubRateLimitError."""
+        import tenacity
+
+        mock_response = Mock()
+        mock_response.status_code = 403
+        mock_response.headers = {
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": "9999999999",
+        }
+        mock_get.return_value = mock_response
+
+        with pytest.raises(tenacity.RetryError) as exc_info:
+            get_previous_github_releases("test", "repo")
+
+        assert isinstance(exc_info.value.last_attempt.exception(), GitHubRateLimitError)
+
+    @patch("tasks.tools.requests.get")
+    def test_rate_limit_429_raises(self, mock_get):
+        """HTTP 429 raises GitHubRateLimitError."""
+        import tenacity
+
+        mock_response = Mock()
+        mock_response.status_code = 429
+        mock_response.headers = {}
+        mock_get.return_value = mock_response
+
+        with pytest.raises(tenacity.RetryError) as exc_info:
+            get_previous_github_releases("test", "repo")
+
+        assert isinstance(exc_info.value.last_attempt.exception(), GitHubRateLimitError)
 
 
 class TestReleaseFallback:
@@ -849,3 +894,58 @@ class TestAutomationSkippedDisplay:
 
         assert "Checked Versions" in captured_body
         assert "v4.0.0 (2d)" in captured_body
+
+
+class TestExtractSemverFromTag:
+    """Test extract_semver_from_tag helper."""
+
+    @pytest.mark.parametrize(
+        ("tag", "expected"),
+        [
+            ("v1.2.3", "1.2.3"),
+            ("1.2.3", "1.2.3"),
+            ("V1.2.3", "1.2.3"),
+            ("v1.2.3-rc1", "1.2.3-rc1"),
+            ("v1.2.3+k3s1", "1.2.3+k3s1"),
+            ("v1.2.3-rc1+build.4", "1.2.3-rc1+build.4"),
+            ("kustomize/v5.3.0", "5.3.0"),
+            ("cli/cli-v2.50.0", "2.50.0"),
+            ("latest", None),
+            ("", None),
+            ("v1", None),
+            ("1.2", None),
+        ],
+    )
+    def test_extract_semver(self, tag, expected):
+        assert extract_semver_from_tag(tag) == expected
+
+
+class TestLogging:
+    """Test logging behavior in exception handlers."""
+
+    @patch("tasks.tools.get_previous_github_releases", side_effect=Exception("boom"))
+    def test_try_previous_release_logs_failure(self, mock_prev, caplog):
+        import logging
+
+        from tasks.tools import _try_previous_release
+
+        with caplog.at_level(logging.WARNING, logger="tasks.tools"):
+            result, checked = _try_previous_release("test", "owner", "repo", "1.0.0")
+
+        assert result is None
+        assert checked == []
+        assert "Failed to fetch previous releases" in caplog.text
+
+    @patch("tasks.tools.get_latest_github_release_version", side_effect=Exception("boom"))
+    def test_check_package_update_logs_failure(self, mock_latest, caplog):
+        import logging
+
+        from tasks.tools import check_package_update
+
+        with caplog.at_level(logging.WARNING, logger="tasks.tools"):
+            result = check_package_update(
+                "test", {"version": "1.0.0", "repo_url": "https://github.com/o/r"}
+            )
+
+        assert result is None
+        assert "Failed to check update" in caplog.text
