@@ -724,13 +724,13 @@ class TestFormatCheckedVersions:
 
 
 class TestDetectUpdatesDisplay:
-    """Test detect_updates console output for checked_versions."""
+    """Test detect_updates returns checked_versions data for caller display."""
 
     @patch("tasks.tools.get_previous_github_releases")
     @patch("tasks.tools.get_latest_github_release_version")
     @patch("tasks.tools.Progress")
     @patch("tasks.tools.Console")
-    def test_shows_walk_chain_for_fallback_update(
+    def test_fallback_update_includes_checked_versions(
         self,
         mock_console_cls,
         mock_progress_cls,
@@ -738,10 +738,9 @@ class TestDetectUpdatesDisplay:
         mock_previous,
         sample_metadata,
     ):
-        """Fallback update prints 'walked:' line with version chain."""
+        """Fallback update returns checked_versions in update dict for caller display."""
         from datetime import UTC, datetime, timedelta
 
-        mock_console_instance = mock_console_cls.return_value
         now = datetime.now(UTC)
         two_days_ago = (now - timedelta(days=2)).isoformat()
         ten_days_ago = (now - timedelta(days=10)).isoformat()
@@ -764,10 +763,6 @@ class TestDetectUpdatesDisplay:
         fallback = [u for u in updates if "checked_versions" in u]
         assert len(fallback) == 1
         assert fallback[0]["to_version"] == "1.9.0"
-
-        print_calls = [str(call) for call in mock_console_instance.print.call_args_list]
-        walked_calls = [c for c in print_calls if "walked:" in c]
-        assert len(walked_calls) == 1
 
 
 class TestAutomationSkippedDisplay:
