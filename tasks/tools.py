@@ -440,13 +440,6 @@ def detect_updates(
                             skipped.append(result)
                         else:
                             updates.append(result)
-                            console.print(
-                                f"  [green]✓[/green] {result['package']}: "
-                                f"{result['from_version']} → {result['to_version']}"
-                            )
-                            if "checked_versions" in result:
-                                chain = _format_checked_versions(result["checked_versions"])
-                                console.print(f"    walked: {chain}")
                 except Exception:
                     console.print(f"  [red]✗[/red] {package_name}: Failed to check")
                 finally:
@@ -456,11 +449,13 @@ def detect_updates(
 
 
 def _update_sha256_for_updates(
-    metadata: dict, updates: list[dict], console: Console | None = None
-) -> None:
-    """Fetch and set SHA256 digests for updated packages."""
-    if console is None:
-        console = Console()
+    metadata: dict, updates: list[dict]
+) -> dict[str, str | None]:
+    """Fetch and set SHA256 digests for updated packages.
+
+    Returns a mapping of package name to SHA256 digest (or None if not found).
+    """
+    sha_map: dict[str, str | None] = {}
 
     for u in updates:
         pkg_name = u["package"]
@@ -469,13 +464,16 @@ def _update_sha256_for_updates(
         repo_url = pkg_meta.get("repo_url")
 
         if not version or not repo_url:
+            sha_map[pkg_name] = None
             continue
 
         if pkg_name == "asdf":
+            sha_map[pkg_name] = None
             continue
 
         owner, repo = get_owner_and_repo(repo_url)
         if not owner or not repo:
+            sha_map[pkg_name] = None
             continue
 
         resolved_url = render_download_url_for_linux_amd64(pkg_name, pkg_meta)
@@ -492,9 +490,9 @@ def _update_sha256_for_updates(
 
         if sha256:
             pkg_meta["sha256"] = sha256
-            console.print(f"  [green]sha256[/green] {pkg_name}: {sha256[:16]}...")
-        else:
-            console.print(f"  [yellow]sha256[/yellow] {pkg_name}: digest not found")
+        sha_map[pkg_name] = sha256
+
+    return sha_map
 
 
 def check_required_tools(download_url: str) -> None:
@@ -626,7 +624,22 @@ def update(
             for u in updates:
                 metadata[u["package"]]["version"] = u["to_version"]
 
-            _update_sha256_for_updates(metadata, updates, console)
+            sha_map = _update_sha256_for_updates(metadata, updates)
+
+            for u in updates:
+                pkg = u["package"]
+                sha = sha_map.get(pkg)
+                sha_str = (
+                    f"  [dim]sha256: {sha[:16]}...[/dim]"
+                    if sha
+                    else "  [yellow]sha256: not found[/yellow]"
+                )
+                console.print(
+                    f"  [green]✓[/green] {pkg}: {u['from_version']} → {u['to_version']}{sha_str}"
+                )
+                if "checked_versions" in u:
+                    chain = _format_checked_versions(u["checked_versions"])
+                    console.print(f"    walked: {chain}")
 
             write_metadata(metadata)
             metadata_cache.clear()
@@ -654,16 +667,26 @@ def update(
                 first = ", ".join(u["package"] for u in updates[:3])
                 title = f"chore: update {first} +{count - 3} more"
 
-            pretty_json = json.dumps(updates, indent=2)
+            table_lines = [
+                "| Package | From | To | SHA256 |",
+                "|---|---|---|---|",
+            ]
+            for u in updates:
+                pkg = u["package"]
+                sha = metadata[pkg].get("sha256")
+                sha_display = f"{sha[:16]}..." if sha else "N/A"
+                table_lines.append(
+                    f"| {pkg} | {u['from_version']} | {u['to_version']} | `{sha_display}` |"
+                )
+
+            update_table = "\n".join(table_lines)
 
             body = (
                 "Automated weekly package updates.\n\n"
                 f"{count} package(s) updated.\n\n"
                 "<details>\n"
                 "<summary>Updated Packages (click to expand)</summary>\n\n"
-                "```json\n"
-                f"{pretty_json}\n"
-                "```\n\n"
+                f"{update_table}\n\n"
                 "</details>"
             )
 
@@ -779,7 +802,22 @@ def update(
         for u in updates:
             metadata[u["package"]]["version"] = u["to_version"]
 
-        _update_sha256_for_updates(metadata, updates)
+        sha_map = _update_sha256_for_updates(metadata, updates)
+
+        for u in updates:
+            pkg = u["package"]
+            sha = sha_map.get(pkg)
+            sha_str = (
+                f"  [dim]sha256: {sha[:16]}...[/dim]"
+                if sha
+                else "  [yellow]sha256: not found[/yellow]"
+            )
+            console.print(
+                f"  [green]✓[/green] {pkg}: {u['from_version']} → {u['to_version']}{sha_str}"
+            )
+            if "checked_versions" in u:
+                chain = _format_checked_versions(u["checked_versions"])
+                console.print(f"    walked: {chain}")
 
         write_metadata(metadata)
         metadata_cache.clear()
