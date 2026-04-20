@@ -9,10 +9,29 @@ from typing import Any
 from invoke.context import Context
 from jinja2 import BaseLoader, Environment
 import requests
+import semver
 import tenacity
 import yaml
 
+_SEMVER_RE = re.compile(r"[vV]?(\d+\.\d+\.\d+(?:-[\w.-]+)?(?:\+[\w.-]+)?)")
+
 _os_cache: str | None = None
+
+
+def extract_semver_from_tag(tag: str) -> str | None:
+    """Extract a semantic version string from a tag, stripping any 'v' prefix.
+
+    Returns the version string if a valid semver is found, or None otherwise.
+    """
+    match = _SEMVER_RE.search(tag)
+    if not match:
+        return None
+    candidate = match.group(1)
+    try:
+        semver.Version.parse(candidate)
+    except ValueError:
+        return None
+    return candidate
 
 
 class MetadataCache:

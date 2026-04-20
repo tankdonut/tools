@@ -2,9 +2,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from datetime import UTC, datetime
 import json
+import logging
 import os
 from pathlib import Path
-import re
 import shutil
 import subprocess
 import tempfile
@@ -37,6 +37,7 @@ from tasks.lib import (
     ROOT_DIR,
     MetadataCache,
     PackageDownloader,
+    extract_semver_from_tag,
     fetch_asset_digest,
     render_download_url_for_linux_amd64,
     render_template,
@@ -48,6 +49,8 @@ RELEASE_AGE_DAYS = 7
 metadata_cache = MetadataCache()
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 
 def _format_checked_versions(checked_versions: list[dict]) -> str:
@@ -153,7 +156,8 @@ def _try_previous_release(
 
     try:
         releases = get_previous_github_releases(owner, repo)
-    except Exception:
+    except Exception as e:
+        logger.warning("Failed to fetch previous releases for %s/%s: %s", owner, repo, e)
         return None, []
 
     if not releases:
@@ -165,10 +169,9 @@ def _try_previous_release(
         return None, []
 
     for tag, published_at in releases:
-        match = re.search(r"v?(\d+\.\d+\.\d+)", tag)
-        if not match:
+        release_version = extract_semver_from_tag(tag)
+        if not release_version:
             continue
-        release_version = match.group(1)
         try:
             release_semver = semver.Version.parse(release_version)
         except ValueError:
@@ -216,7 +219,8 @@ def check_package_update(
         return None
     try:
         latest_tag, published_at = get_latest_github_release_version(owner, repo)
-    except Exception:
+    except Exception as e:
+        logger.warning("Failed to check update for %s: %s", name, e)
         return None
     if not latest_tag:
         return None
@@ -225,9 +229,16 @@ def check_package_update(
             published_date = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
             age_days = (datetime.now(UTC) - published_date).days
             if age_days < cooldown:
-                skipped_version = latest_tag.lstrip("v")
-                if skipped_version == current_version:
+                skipped_version = extract_semver_from_tag(latest_tag)
+                if not skipped_version:
                     return None
+                try:
+                    skipped_sv = semver.Version.parse(skipped_version)
+                    current_sv = semver.Version.parse(current_version)
+                    if skipped_sv == current_sv:
+                        return None
+                except ValueError:
+                    pass
                 fallback, fallback_checked = _try_previous_release(
                     name, owner, repo, current_version, cooldown=cooldown
                 )
@@ -249,10 +260,9 @@ def check_package_update(
                 }
         except (ValueError, TypeError):
             pass
-    match = re.search(r"v?(\d+\.\d+\.\d+)", latest_tag)
-    if not match:
+    latest_version = extract_semver_from_tag(latest_tag)
+    if not latest_version:
         return None
-    latest_version = match.group(1)
     try:
         if semver.Version.parse(current_version) < semver.Version.parse(latest_version):
             return {
@@ -337,43 +347,56 @@ def get_latest_github_release_version(owner: str, repo: str) -> tuple[str | None
     return data.get("tag_name"), data.get("published_at")
 
 
+@tenacity.retry(
+    stop=tenacity.stop_after_attempt(3),
+    wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
+    retry=tenacity.retry_if_exception_type((requests.exceptions.Timeout, GitHubRateLimitError)),
+)
 def get_previous_github_releases(
     owner: str, repo: str, limit: int = 10
 ) -> list[tuple[str, str | None]]:
-    """Get previous GitHub releases via gh CLI, ordered newest first."""
+    """Get previous GitHub releases via GitHub REST API, ordered newest first."""
     if not owner or not repo:
         return []
 
-    full_repo = f"{owner}/{repo}"
-    result = subprocess.run(
-        [
-            "gh",
-            "release",
-            "list",
-            "--repo",
-            full_repo,
-            "--limit",
-            str(limit),
-            "--json",
-            "tagName,publishedAt,isDraft,isPrerelease",
-        ],
-        capture_output=True,
-        text=True,
-    )
+    url = f"https://api.github.com/repos/{owner}/{repo}/releases?per_page={limit}"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
 
-    if result.returncode != 0:
-        return []
+    token = os.getenv("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
 
     try:
-        data = json.loads(result.stdout)
-    except (json.JSONDecodeError, ValueError):
+        response = requests.get(url, headers=headers, timeout=10)
+    except requests.exceptions.Timeout:
+        raise  # Will trigger retry
+
+    if response.status_code == 403:
+        remaining = int(response.headers.get("X-RateLimit-Remaining", 0))
+        if remaining == 0:
+            reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
+            wait_time = max(2, reset_time - time.time())
+            raise GitHubRateLimitError(
+                f"Rate limited. Resets in {wait_time} seconds. Set GITHUB_TOKEN for higher limits."
+            )
         return []
+
+    if response.status_code == 429:
+        raise GitHubRateLimitError("Too many requests")
+
+    if response.status_code != 200:
+        return []
+
+    data = response.json()
 
     releases: list[tuple[str, str | None]] = []
     for release in data:
-        if release.get("isDraft", False) or release.get("isPrerelease", False):
+        if release.get("draft", False) or release.get("prerelease", False):
             continue
-        releases.append((release.get("tagName", ""), release.get("publishedAt")))
+        releases.append((release.get("tag_name", ""), release.get("published_at")))
     return releases
 
 
@@ -789,11 +812,9 @@ def add(
     if not latest_tag:
         raise ValueError("Unable to determine latest release version")
 
-    match = re.search(r"v?(\d+\.\d+\.\d+)", latest_tag)
-    if not match:
+    version = extract_semver_from_tag(latest_tag)
+    if not version:
         raise ValueError(f"Unable to extract semver from tag '{latest_tag}'")
-
-    version = match.group(1)
 
     metadata[package_name] = {
         "description": description,
