@@ -88,8 +88,8 @@ class TestRenderDownloadUrlForLinuxAmd64:
 
 
 class TestFetchAssetDigest:
-    @patch("tasks.lib._resolve_release_tag")
-    @patch("tasks.lib.subprocess.run")
+    @patch("tasks.lib.digests._resolve_release_tag")
+    @patch("tasks.lib.digests.subprocess.run")
     def test_api_returns_digest(self, mock_run, mock_tag):
         mock_tag.return_value = "v1.2.3"
         hex_val = "ab" * 32
@@ -98,20 +98,20 @@ class TestFetchAssetDigest:
         result = fetch_asset_digest("owner", "repo", "1.2.3", "tool-linux-amd64.tar.gz", "tool", {})
         assert result == hex_val
 
-    @patch("tasks.lib._resolve_release_tag")
-    @patch("tasks.lib.subprocess.run")
+    @patch("tasks.lib.digests._resolve_release_tag")
+    @patch("tasks.lib.digests.subprocess.run")
     def test_api_returns_null_digest_tries_fallback(self, mock_run, mock_tag):
         mock_tag.return_value = "v1.2.3"
         # First call (API digest) returns empty
         mock_run.return_value = Mock(returncode=0, stdout="")
 
-        with patch("tasks.lib._fetch_digest_fallback", return_value="fallback_hash"):
+        with patch("tasks.lib.digests._fetch_digest_fallback", return_value="fallback_hash"):
             result = fetch_asset_digest(
                 "owner", "repo", "1.2.3", "tool-linux-amd64.tar.gz", "tool", {}
             )
             assert result == "fallback_hash"
 
-    @patch("tasks.lib._fetch_hashicorp_sha256")
+    @patch("tasks.lib.digests._fetch_hashicorp_sha256")
     def test_hashicorp_tool(self, mock_hc):
         mock_hc.return_value = "hashicorp_hash_abc123"
         result = fetch_asset_digest(
@@ -120,7 +120,7 @@ class TestFetchAssetDigest:
         assert result == "hashicorp_hash_abc123"
         mock_hc.assert_called_once_with("terraform", "1.5.0")
 
-    @patch("tasks.lib._fetch_hashicorp_sha256")
+    @patch("tasks.lib.digests._fetch_hashicorp_sha256")
     def test_packer_tool(self, mock_hc):
         mock_hc.return_value = "packer_hash"
         result = fetch_asset_digest("hashicorp", "packer", "1.10.0", "packer.zip", "packer", {})
@@ -132,7 +132,7 @@ class TestFetchAssetDigest:
 
 
 class TestResolveReleaseTag:
-    @patch("tasks.lib.subprocess.run")
+    @patch("tasks.lib.digests.subprocess.run")
     def test_v_prefix_found(self, mock_run):
         from tasks.lib import _resolve_release_tag
 
@@ -140,7 +140,7 @@ class TestResolveReleaseTag:
         result = _resolve_release_tag("owner", "repo", "1.2.3")
         assert result == "v1.2.3"
 
-    @patch("tasks.lib.subprocess.run")
+    @patch("tasks.lib.digests.subprocess.run")
     def test_kustomize_tag_fallback(self, mock_run):
         from tasks.lib import _resolve_release_tag
 
@@ -152,7 +152,7 @@ class TestResolveReleaseTag:
         result = _resolve_release_tag("kubernetes-sigs", "kustomize", "5.8.1")
         assert result == "kustomize/v5.8.1"
 
-    @patch("tasks.lib.subprocess.run")
+    @patch("tasks.lib.digests.subprocess.run")
     def test_no_tag_found(self, mock_run):
         from tasks.lib import _resolve_release_tag
 
@@ -162,7 +162,7 @@ class TestResolveReleaseTag:
 
 
 class TestFetchHashiCorpSha256:
-    @patch("tasks.lib._fetch_url_content")
+    @patch("tasks.lib.digests._fetch_url_content")
     def test_found(self, mock_fetch):
         from tasks.lib import _fetch_hashicorp_sha256
 
@@ -172,7 +172,7 @@ class TestFetchHashiCorpSha256:
         result = _fetch_hashicorp_sha256("terraform", "1.5.0")
         assert result == "abc123"
 
-    @patch("tasks.lib._fetch_url_content")
+    @patch("tasks.lib.digests._fetch_url_content")
     def test_not_found(self, mock_fetch):
         from tasks.lib import _fetch_hashicorp_sha256
 
