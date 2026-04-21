@@ -1,5 +1,5 @@
 from tasks.lib import load_metadata
-from tasks.tools import render_metadata, validate_metadata
+from tasks.tools._metadata import render_metadata, validate_metadata
 
 SHA256_HEX = "a" * 64
 

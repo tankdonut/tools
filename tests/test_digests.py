@@ -182,11 +182,11 @@ class TestFetchHashiCorpSha256:
 
 
 class TestDigestsTask:
-    @patch("tasks.tools.metadata_cache")
-    @patch("tasks.tools.write_metadata")
-    @patch("tasks.tools.fetch_asset_digest")
-    @patch("tasks.tools.render_download_url_for_linux_amd64")
-    @patch("tasks.tools.Console")
+    @patch("tasks.tools.digests.metadata_cache")
+    @patch("tasks.tools.digests.write_metadata")
+    @patch("tasks.tools.digests.fetch_asset_digest")
+    @patch("tasks.tools.digests.render_download_url_for_linux_amd64")
+    @patch("tasks.tools.digests.Console")
     def test_digests_task_updates_metadata(
         self, mock_console_cls, mock_render, mock_fetch, mock_write, mock_cache
     ):
@@ -215,11 +215,11 @@ class TestDigestsTask:
         written_meta = mock_write.call_args[0][0]
         assert written_meta["mytool"]["sha256"] == "abc123def456" * 4
 
-    @patch("tasks.tools.metadata_cache")
-    @patch("tasks.tools.write_metadata")
-    @patch("tasks.tools.fetch_asset_digest")
-    @patch("tasks.tools.render_download_url_for_linux_amd64")
-    @patch("tasks.tools.Console")
+    @patch("tasks.tools.digests.metadata_cache")
+    @patch("tasks.tools.digests.write_metadata")
+    @patch("tasks.tools.digests.fetch_asset_digest")
+    @patch("tasks.tools.digests.render_download_url_for_linux_amd64")
+    @patch("tasks.tools.digests.Console")
     def test_digests_task_single_tool(
         self, mock_console_cls, mock_render, mock_fetch, mock_write, mock_cache
     ):
@@ -252,9 +252,9 @@ class TestDigestsTask:
         # Only tool-a should be processed
         mock_fetch.assert_called_once()
 
-    @patch("tasks.tools.metadata_cache")
-    @patch("tasks.tools.write_metadata")
-    @patch("tasks.tools.Console")
+    @patch("tasks.tools.digests.metadata_cache")
+    @patch("tasks.tools.digests.write_metadata")
+    @patch("tasks.tools.digests.Console")
     def test_digests_skips_asdf(self, mock_console_cls, mock_write, mock_cache):
         from invoke.context import Context
         from tasks.tools import digests
@@ -275,9 +275,9 @@ class TestDigestsTask:
 
         mock_write.assert_not_called()
 
-    @patch("tasks.tools.metadata_cache")
-    @patch("tasks.tools.write_metadata")
-    @patch("tasks.tools.Console")
+    @patch("tasks.tools.digests.metadata_cache")
+    @patch("tasks.tools.digests.write_metadata")
+    @patch("tasks.tools.digests.Console")
     def test_digests_unknown_tool(self, mock_console_cls, mock_write, mock_cache):
         from invoke.context import Context
         from tasks.tools import digests

@@ -3,19 +3,19 @@ from unittest.mock import Mock, patch
 
 import pytest
 from tasks.lib import extract_semver_from_tag
-from tasks.tools import (
+from tasks.tools._github import (
     GitHubRateLimitError,
-    detect_updates,
     get_latest_github_release_version,
     get_owner_and_repo,
     get_previous_github_releases,
 )
+from tasks.tools._updates import detect_updates
 
 
 class TestDetectUpdates:
     """Test detect_updates function."""
 
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_detect_updates_found(self, mock_latest, sample_metadata):
         """Test detecting updates when newer versions exist."""
         mock_latest.side_effect = [("v2.1.0", None), ("v3.0.0", None)]
@@ -26,7 +26,7 @@ class TestDetectUpdates:
         assert updates[0]["from_version"] == "1.0.0"
         assert updates[0]["to_version"] == "2.1.0"
 
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_detect_updates_none_found(self, mock_latest, sample_metadata):
         """Test when no updates are available."""
         mock_latest.side_effect = [("v1.0.0", None), ("v2.0.0", None)]
@@ -34,7 +34,7 @@ class TestDetectUpdates:
 
         assert len(updates) == 0
 
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_detect_updates_invalid_version(self, mock_latest, sample_metadata):
         """Test handling of invalid version tags."""
         mock_latest.side_effect = [("invalid-tag", None), ("v3.0.0", None)]
@@ -74,7 +74,7 @@ class TestGetOwnerAndRepo:
 class TestGetLatestGitHubReleaseVersion:
     """Test get_latest_github_release_version function."""
 
-    @patch("tasks.tools.requests.get")
+    @patch("tasks.tools._github.requests.get")
     def test_success(self, mock_get):
         """Test successful API call."""
         mock_response = Mock()
@@ -85,7 +85,7 @@ class TestGetLatestGitHubReleaseVersion:
         version = get_latest_github_release_version("test", "repo")
         assert version == ("v1.2.3", None)
 
-    @patch("tasks.tools.requests.get")
+    @patch("tasks.tools._github.requests.get")
     def test_with_auth_token(self, mock_get, monkeypatch):
         """Test API call with authentication token."""
         monkeypatch.setenv("GITHUB_TOKEN", "test-token")
@@ -100,7 +100,7 @@ class TestGetLatestGitHubReleaseVersion:
         assert "Authorization" in call_args.kwargs["headers"]
         assert call_args.kwargs["headers"]["Authorization"] == "Bearer test-token"
 
-    @patch("tasks.tools.requests.get")
+    @patch("tasks.tools._github.requests.get")
     def test_failure_status_code(self, mock_get):
         """Test handling of non-200 status codes."""
         mock_response = Mock()
@@ -114,9 +114,9 @@ class TestGetLatestGitHubReleaseVersion:
 class TestAutomationDryRun:
     """Test automation task dry-run mode."""
 
-    @patch("tasks.tools.subprocess.run")
-    @patch("tasks.tools.metadata_cache")
-    @patch("tasks.tools.detect_updates")
+    @patch("tasks.tools.update.subprocess.run")
+    @patch("tasks.tools.update.metadata_cache")
+    @patch("tasks.tools.update.detect_updates")
     @patch("pathlib.Path.read_bytes")
     @patch("pathlib.Path.exists")
     def test_automation_dry_run_side_effects(
@@ -160,11 +160,11 @@ class TestAutomationDryRun:
         # Should NOT have called ANY git operations
         assert not any("git" in git_call for git_call in git_calls)
 
-    @patch("tasks.tools.subprocess.run")
-    @patch("tasks.tools.metadata_cache")
-    @patch("tasks.tools.detect_updates")
-    @patch("tasks.tools.write_metadata")
-    @patch("tasks.tools.subprocess.check_output")
+    @patch("tasks.tools.update.subprocess.run")
+    @patch("tasks.tools.update.metadata_cache")
+    @patch("tasks.tools.update.detect_updates")
+    @patch("tasks.tools.update.write_metadata")
+    @patch("tasks.tools.update.subprocess.check_output")
     def test_automation_dry_run_no_metadata_modification(
         self,
         mock_check_output,
@@ -203,12 +203,12 @@ class TestAutomationDryRun:
 class TestReleaseAgeFilter:
     """Test release age filtering for updates."""
 
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_release_6_days_old_is_skipped(self, mock_latest):
         """Test that releases younger than 7 days are skipped."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         # Mock a release published 6 days ago
         six_days_ago = datetime.now(UTC) - timedelta(days=6)
@@ -227,12 +227,12 @@ class TestReleaseAgeFilter:
         assert result["package"] == "test-pkg"
         assert "too young" in result["reason"]
 
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_release_exactly_7_days_old_is_not_skipped(self, mock_latest):
         """Test that releases exactly 7 days old are NOT skipped."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         # Mock a release published exactly 7 days ago
         seven_days_ago = datetime.now(UTC) - timedelta(days=7)
@@ -249,12 +249,12 @@ class TestReleaseAgeFilter:
         assert result["from_version"] == "1.0.0"
         assert result["to_version"] == "2.0.0"
 
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_release_8_days_old_is_not_skipped(self, mock_latest):
         """Test that releases older than 7 days are NOT skipped."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         # Mock a release published 8 days ago
         eight_days_ago = datetime.now(UTC) - timedelta(days=8)
@@ -271,10 +271,10 @@ class TestReleaseAgeFilter:
         assert result["from_version"] == "1.0.0"
         assert result["to_version"] == "2.0.0"
 
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_release_without_published_at_is_not_skipped(self, mock_latest):
         """Test that releases without published_at are NOT skipped (defensive)."""
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         # Mock a release with no published_at (None)
         mock_latest.return_value = ("v2.0.0", None)
@@ -293,7 +293,7 @@ class TestReleaseAgeFilter:
 class TestGetPreviousGitHubReleases:
     """Test get_previous_github_releases function."""
 
-    @patch("tasks.tools.requests.get")
+    @patch("tasks.tools._github.requests.get")
     def test_success(self, mock_get):
         """Successful API call returns non-draft, non-prerelease releases."""
         mock_response = Mock()
@@ -332,7 +332,7 @@ class TestGetPreviousGitHubReleases:
         assert result[0] == ("v2.0.0", "2025-01-15T00:00:00Z")
         assert result[1] == ("v1.9.0", "2025-01-10T00:00:00Z")
 
-    @patch("tasks.tools.requests.get")
+    @patch("tasks.tools._github.requests.get")
     def test_empty_releases(self, mock_get):
         """Empty list from API returns empty list."""
         mock_response = Mock()
@@ -344,7 +344,7 @@ class TestGetPreviousGitHubReleases:
 
         assert result == []
 
-    @patch("tasks.tools.requests.get")
+    @patch("tasks.tools._github.requests.get")
     def test_non_200_returns_empty(self, mock_get):
         """Non-200 status code returns empty list."""
         mock_response = Mock()
@@ -355,7 +355,7 @@ class TestGetPreviousGitHubReleases:
 
         assert result == []
 
-    @patch("tasks.tools.requests.get")
+    @patch("tasks.tools._github.requests.get")
     def test_invalid_json_raises_value_error(self, mock_get):
         """Response with invalid JSON raises ValueError (propagated from response.json())."""
         mock_response = Mock()
@@ -371,7 +371,7 @@ class TestGetPreviousGitHubReleases:
         result = get_previous_github_releases("", "repo")
         assert result == []
 
-    @patch("tasks.tools.requests.get")
+    @patch("tasks.tools._github.requests.get")
     def test_rate_limit_403_raises(self, mock_get):
         """HTTP 403 with rate limit remaining=0 raises GitHubRateLimitError."""
         import tenacity
@@ -389,7 +389,7 @@ class TestGetPreviousGitHubReleases:
 
         assert isinstance(exc_info.value.last_attempt.exception(), GitHubRateLimitError)
 
-    @patch("tasks.tools.requests.get")
+    @patch("tasks.tools._github.requests.get")
     def test_rate_limit_429_raises(self, mock_get):
         """HTTP 429 raises GitHubRateLimitError."""
         import tenacity
@@ -408,13 +408,13 @@ class TestGetPreviousGitHubReleases:
 class TestReleaseFallback:
     """Test fallback to previous releases when latest is too young."""
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_fallback_to_previous_release(self, mock_latest, mock_previous):
         """When latest is too young, fall back to the previous release if old enough."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
@@ -435,13 +435,13 @@ class TestReleaseFallback:
         assert result["from_version"] == "1.3.5"
         assert result["to_version"] == "1.3.8"
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_fallback_all_previous_too_young(self, mock_latest, mock_previous):
         """When all previous releases are also too young, return skip info."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
@@ -461,13 +461,13 @@ class TestReleaseFallback:
         assert "skipped_version" in result
         assert result["skipped_version"] == "1.3.9"
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_fallback_previous_equal_to_current(self, mock_latest, mock_previous):
         """When previous release equals current version, return skip info."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
@@ -486,13 +486,13 @@ class TestReleaseFallback:
         assert result is not None
         assert "skipped_version" in result
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_fallback_previous_older_than_current(self, mock_latest, mock_previous):
         """When all previous releases are older than current, return skip info."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
@@ -511,13 +511,13 @@ class TestReleaseFallback:
         assert result is not None
         assert "skipped_version" in result
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_fallback_empty_previous_releases(self, mock_latest, mock_previous):
         """When no previous releases available, return skip info."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
@@ -532,13 +532,13 @@ class TestReleaseFallback:
         assert result is not None
         assert "skipped_version" in result
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_fallback_api_failure(self, mock_latest, mock_previous):
         """When get_previous_github_releases raises, return skip info."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
@@ -553,13 +553,13 @@ class TestReleaseFallback:
         assert result is not None
         assert "skipped_version" in result
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_fallback_skips_releases_without_date(self, mock_latest, mock_previous):
         """Releases without published_at are skipped during fallback."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
@@ -579,13 +579,13 @@ class TestReleaseFallback:
         assert result is not None
         assert result["to_version"] == "1.3.7"
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_fallback_walks_multiple_releases(self, mock_latest, mock_previous):
         """Walks back through multiple too-young releases to find an old enough one."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         two_days_ago = (now - timedelta(days=2)).isoformat()
@@ -608,13 +608,13 @@ class TestReleaseFallback:
         assert result is not None
         assert result["to_version"] == "1.3.6"
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_fallback_walk_produces_checked_versions_chain(self, mock_latest, mock_previous):
         """Fallback walk accumulates checked_versions with too_young and selected entries."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         two_days_ago = (now - timedelta(days=2)).isoformat()
@@ -646,12 +646,12 @@ class TestReleaseFallback:
         assert cv[3]["version"] == "1.3.6"
         assert cv[3]["status"] == "selected"
 
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_direct_update_has_no_checked_versions(self, mock_latest):
         """Direct update path does not include checked_versions."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         eight_days_ago = (now - timedelta(days=8)).isoformat()
@@ -667,13 +667,13 @@ class TestReleaseFallback:
         assert result["to_version"] == "1.3.9"
         assert "checked_versions" not in result
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_skip_includes_checked_versions(self, mock_latest, mock_previous):
         """Skip dict includes checked_versions with latest as too_young."""
         from datetime import UTC, datetime, timedelta
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
@@ -698,12 +698,12 @@ class TestFormatCheckedVersions:
     """Test _format_checked_versions helper."""
 
     def test_empty_list(self):
-        from tasks.tools import _format_checked_versions
+        from tasks.tools._updates import _format_checked_versions
 
         assert _format_checked_versions([]) == ""
 
     def test_single_entry(self):
-        from tasks.tools import _format_checked_versions
+        from tasks.tools._updates import _format_checked_versions
 
         result = _format_checked_versions(
             [{"version": "1.3.9", "age_days": 2, "status": "too_young"}]
@@ -711,7 +711,7 @@ class TestFormatCheckedVersions:
         assert result == "v1.3.9 (2d)"
 
     def test_multiple_entries(self):
-        from tasks.tools import _format_checked_versions
+        from tasks.tools._updates import _format_checked_versions
 
         result = _format_checked_versions(
             [
@@ -726,10 +726,10 @@ class TestFormatCheckedVersions:
 class TestDetectUpdatesDisplay:
     """Test detect_updates returns checked_versions data for caller display."""
 
-    @patch("tasks.tools.get_previous_github_releases")
-    @patch("tasks.tools.get_latest_github_release_version")
-    @patch("tasks.tools.Progress")
-    @patch("tasks.tools.Console")
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
+    @patch("tasks.tools._updates.Progress")
+    @patch("tasks.tools._updates.Console")
     def test_fallback_update_includes_checked_versions(
         self,
         mock_console_cls,
@@ -768,9 +768,9 @@ class TestDetectUpdatesDisplay:
 class TestAutomationSkippedDisplay:
     """Test automation skipped packages display with checked_versions."""
 
-    @patch("tasks.tools.subprocess.run")
-    @patch("tasks.tools.metadata_cache")
-    @patch("tasks.tools.detect_updates")
+    @patch("tasks.tools.update.subprocess.run")
+    @patch("tasks.tools.update.metadata_cache")
+    @patch("tasks.tools.update.detect_updates")
     @patch("pathlib.Path.read_bytes")
     @patch("pathlib.Path.exists")
     def test_skipped_console_includes_walk_chain(
@@ -813,11 +813,11 @@ class TestAutomationSkippedDisplay:
         ctx = Context()
         update(ctx, pr=True, dry_run=True)
 
-    @patch("tasks.tools.subprocess.run")
-    @patch("tasks.tools.subprocess.check_output")
-    @patch("tasks.tools.metadata_cache")
-    @patch("tasks.tools.detect_updates")
-    @patch("tasks.tools.write_metadata")
+    @patch("tasks.tools.update.subprocess.run")
+    @patch("tasks.tools.update.subprocess.check_output")
+    @patch("tasks.tools.update.metadata_cache")
+    @patch("tasks.tools.update.detect_updates")
+    @patch("tasks.tools.update.write_metadata")
     @patch("pathlib.Path.read_bytes")
     @patch("pathlib.Path.exists")
     def test_pr_body_includes_checked_versions_header(
@@ -918,26 +918,26 @@ class TestExtractSemverFromTag:
 class TestLogging:
     """Test logging behavior in exception handlers."""
 
-    @patch("tasks.tools.get_previous_github_releases", side_effect=Exception("boom"))
+    @patch("tasks.tools._updates.get_previous_github_releases", side_effect=Exception("boom"))
     def test_try_previous_release_logs_failure(self, mock_prev, caplog):
         import logging
 
-        from tasks.tools import _try_previous_release
+        from tasks.tools._updates import _try_previous_release
 
-        with caplog.at_level(logging.WARNING, logger="tasks.tools"):
+        with caplog.at_level(logging.WARNING, logger="tasks.tools._updates"):
             result, checked = _try_previous_release("test", "owner", "repo", "1.0.0")
 
         assert result is None
         assert checked == []
         assert "Failed to fetch previous releases" in caplog.text
 
-    @patch("tasks.tools.get_latest_github_release_version", side_effect=Exception("boom"))
+    @patch("tasks.tools._updates.get_latest_github_release_version", side_effect=Exception("boom"))
     def test_check_package_update_logs_failure(self, mock_latest, caplog):
         import logging
 
-        from tasks.tools import check_package_update
+        from tasks.tools._updates import check_package_update
 
-        with caplog.at_level(logging.WARNING, logger="tasks.tools"):
+        with caplog.at_level(logging.WARNING, logger="tasks.tools._updates"):
             result = check_package_update(
                 "test", {"version": "1.0.0", "repo_url": "https://github.com/o/r"}
             )
