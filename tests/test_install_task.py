@@ -11,7 +11,7 @@ class TestInstallTask:
         """Test that required tools check passes when all tools available."""
         with patch("shutil.which") as mock_which:
             mock_which.return_value = True
-            from tasks.tools import check_required_tools
+            from tasks.tools._install import check_required_tools
 
             # Should not raise
             check_required_tools("https://example.com/package.tar.gz")
@@ -20,7 +20,7 @@ class TestInstallTask:
         """Test that missing curl raises error."""
         with patch("shutil.which") as mock_which:
             mock_which.return_value = False
-            from tasks.tools import check_required_tools
+            from tasks.tools._install import check_required_tools
 
             with pytest.raises(RuntimeError, match="Required tool 'curl' not found"):
                 check_required_tools("https://example.com/package.bin")
@@ -30,11 +30,11 @@ class TestInstallTask:
         test_home = Path("/home/user")
 
         with (
-            patch("tasks.tools.Path.home", return_value=test_home),
+            patch("tasks.tools._install.Path.home", return_value=test_home),
             patch("os.getenv") as mock_getenv,
         ):
             mock_getenv.return_value = "/usr/local/bin:/home/user/.local/bin"
-            from tasks.tools import resolve_install_path
+            from tasks.tools._install import resolve_install_path
 
             # Mock exists on Path object to return True for .local/bin
             original_exists = Path.exists
@@ -52,14 +52,14 @@ class TestInstallTask:
         """Test local path resolution falls back to ~/bin."""
         with patch("os.getenv") as mock_getenv:
             mock_getenv.return_value = "/usr/local/bin"
-            from tasks.tools import resolve_install_path
+            from tasks.tools._install import resolve_install_path
 
             result = resolve_install_path(local=True)
             assert result == Path.home() / "bin"
 
     def test_resolve_dist_install_path(self):
         """Test dist path resolution."""
-        from tasks.tools import resolve_install_path
+        from tasks.tools._install import resolve_install_path
 
         result = resolve_install_path(dist=True)
         from tasks.lib import ROOT_DIR
