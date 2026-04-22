@@ -9,8 +9,8 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.3.7
-  sha256: c8e11cb7f4584d9bb1880257e083983eb62359f4a30566cb626c536adf4d76d9
+  version: 3.3.8
+  sha256: 11070d2502c5a51523f78388e23ddefb9151bd33f2faab955cde78a9c0d492e6
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -96,8 +96,8 @@ flux:
 
   repo_url: https://github.com/fluxcd/flux2
   license: APACHE-2.0
-  version: 2.8.5
-  sha256: 63c178ba938a5443265b2ce02691c005acf4ef6188d4dbb9b9d87333558948c4
+  version: 2.8.6
+  sha256: c53cc990ae266f7840f64c81515d701d8821d558a9062aa4211d71b38cf044be
 helm-docs:
   description: >
     A tool for automatically generating markdown documentation for helm charts
@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.14.19
-  sha256: 8cb11723ce0ec82e2b6ff9a2356b12c2f4c4a95a087ba0a3004b19f167951440
+  version: 1.14.20
+  sha256: 1707133022382ea8c8cc5bc47ab1db52fa206bd9baf8d3ad4d862b489dbb448f
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -272,8 +272,8 @@ terragrunt:
 
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
-  version: 1.0.1
-  sha256: 8108fc7e8535a379413e41f12b310a9dae3327097ab729ba0cb46f62de357f06
+  version: 1.0.2
+  sha256: 4a0e327ec20c7af2c680142c5143ece3236fc3fd6c9de772bd0444a9b95abec2
 tflint:
   description: >
     A Pluggable Terraform Linter
