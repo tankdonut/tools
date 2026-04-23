@@ -1,0 +1,203 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tasks/metadata.yaml'
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          version: "0.9.25"
+
+      - run: uv sync
+
+      - name: Store metadata diff
+        id: check-version-changes
+        run: |
+          DIFF=$(git diff HEAD~1 HEAD -- tasks/metadata.yaml)
+          {
+            echo "METADATA_DIFF<<GHAEOF"
+            echo "$DIFF"
+            echo "GHAEOF"
+          } >> "$GITHUB_ENV"
+          HAS_CHANGES=$(uv run python -c "
+          import os
+          from tasks.release import has_version_changes
+          diff = os.environ['METADATA_DIFF']
+          print('true' if has_version_changes(diff) else 'false')
+          ")
+          echo "has_changes=${HAS_CHANGES}" >> "$GITHUB_OUTPUT"
+
+      - name: List existing tags
+        if: steps.check-version-changes.outputs.has_changes == 'true'
+        run: git tag -l
+
+      - name: Calculate CalVer tag and generate changelog
+        id: calver
+        if: steps.check-version-changes.outputs.has_changes == 'true'
+        run: |
+          uv run python -c "
+          import datetime
+          import subprocess
+
+          from tasks.release import calculate_calver_tag, generate_changelog, parse_metadata_diff
+
+          diff = subprocess.run(
+              ['git', 'diff', 'HEAD~1', 'HEAD', '--', 'tasks/metadata.yaml'],
+              capture_output=True, text=True,
+          ).stdout
+
+          existing_tags = subprocess.run(
+              ['git', 'tag', '-l'],
+              capture_output=True, text=True,
+          ).stdout.split()
+
+          today = datetime.date.today()
+          tag = calculate_calver_tag(today, existing_tags)
+          changes = parse_metadata_diff(diff)
+          changelog = generate_changelog(changes)
+
+          print(f'calver_tag={tag}')
+          with open('$GITHUB_OUTPUT', 'a') as f:
+              f.write(f'calver_tag={tag}\n')
+              f.write('changelog<<EOF\n')
+              f.write(changelog)
+              f.write('\nEOF\n')
+          "
+
+      - name: Check idempotency
+        id: idempotency
+        if: steps.check-version-changes.outputs.has_changes == 'true'
+        run: |
+          TAG="${{ steps.calver.outputs.calver_tag }}"
+          if git tag -l "$TAG" | grep -q .; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create git tag
+        if: >-
+          steps.check-version-changes.outputs.has_changes == 'true' &&
+          steps.idempotency.outputs.skip != 'true'
+        run: |
+          TAG="${{ steps.calver.outputs.calver_tag }}"
+          git tag -a "$TAG" -m "Release $TAG"
+
+      - name: Push tag
+        if: >-
+          steps.check-version-changes.outputs.has_changes == 'true' &&
+          steps.idempotency.outputs.skip != 'true'
+        run: |
+          TAG="${{ steps.calver.outputs.calver_tag }}"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release
+        if: >-
+          steps.check-version-changes.outputs.has_changes == 'true' &&
+          steps.idempotency.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.calver.outputs.calver_tag }}"
+          CHANGELOG="${{ steps.calver.outputs.changelog }}"
+          gh release create "$TAG" --title "$TAG" --notes "$CHANGELOG"
+
+      - name: Update CHANGELOG.md and bump pyproject.toml
+        if: >-
+          steps.check-version-changes.outputs.has_changes == 'true' &&
+          steps.idempotency.outputs.skip != 'true'
+        env:
+          RELEASE_TAG: ${{ steps.calver.outputs.calver_tag }}
+        run: |
+          uv run python -c "
+          import datetime
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          from tasks.release import parse_metadata_diff, update_changelog_file
+
+          diff = subprocess.run(
+              ['git', 'diff', 'HEAD~1', 'HEAD', '--', 'tasks/metadata.yaml'],
+              capture_output=True, text=True,
+          ).stdout
+          changes = parse_metadata_diff(diff)
+          tag = os.environ['RELEASE_TAG']
+          today_str = datetime.date.today().isoformat()
+
+          changelog_path = Path('CHANGELOG.md')
+          update_changelog_file(changelog_path, tag, today_str, changes)
+
+          pyproject = Path('pyproject.toml')
+          content = pyproject.read_text()
+          content = re.sub(r'version = \".*\"', f'version = \"{tag}\"', content, count=1)
+          pyproject.write_text(content)
+          "
+
+      - name: Commit and push changes
+        if: >-
+          steps.check-version-changes.outputs.has_changes == 'true' &&
+          steps.idempotency.outputs.skip != 'true'
+        run: |
+          TAG="${{ steps.calver.outputs.calver_tag }}"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md pyproject.toml
+          git commit -m "chore: release ${TAG}"
+          git push origin main
+
+      - name: Install crane
+        if: >-
+          steps.check-version-changes.outputs.has_changes == 'true' &&
+          steps.idempotency.outputs.skip != 'true'
+        run: |
+          CRANE_VERSION="0.20.2"
+          curl -sL "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz" \
+            | tar -xzf - crane
+          sudo mv crane /usr/local/bin/crane
+
+      - name: Tag container image
+        if: >-
+          steps.check-version-changes.outputs.has_changes == 'true' &&
+          steps.idempotency.outputs.skip != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}"
+          TAG="${{ steps.calver.outputs.calver_tag }}"
+          DIGEST="${{ github.sha }}"
+          echo "${GITHUB_TOKEN}" | crane auth login ghcr.io -u "${{ github.actor }}" --password-stdin
+          for i in $(seq 1 10); do
+            if crane digest "${IMAGE}@${DIGEST}" 2>/dev/null; then
+              echo "Image found, tagging..."
+              crane tag "${IMAGE}@${DIGEST}" "${TAG}"
+              exit 0
+            fi
+            echo "Waiting for image... attempt $i/10"
+            sleep 30
+          done
+          echo "ERROR: Image not found after 10 attempts" >&2
+          exit 1
