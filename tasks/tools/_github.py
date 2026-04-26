@@ -51,7 +51,7 @@ def get_latest_github_release_version(owner: str, repo: str) -> tuple[str | None
         "X-GitHub-Api-Version": "2022-11-28",
     }
 
-    token = os.getenv("GITHUB_TOKEN")
+    token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
@@ -67,7 +67,8 @@ def get_latest_github_release_version(owner: str, repo: str) -> tuple[str | None
             reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
             wait_time = max(2, reset_time - time.time())
             raise GitHubRateLimitError(
-                f"Rate limited. Resets in {wait_time} seconds. Set GITHUB_TOKEN for higher limits."
+                f"Rate limited. Resets in {wait_time} seconds."
+                " Set GITHUB_TOKEN or GH_TOKEN for higher limits."
             )
         return None, None
 
@@ -99,7 +100,7 @@ def get_previous_github_releases(
         "X-GitHub-Api-Version": "2022-11-28",
     }
 
-    token = os.getenv("GITHUB_TOKEN")
+    token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
@@ -114,7 +115,8 @@ def get_previous_github_releases(
             reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
             wait_time = max(2, reset_time - time.time())
             raise GitHubRateLimitError(
-                f"Rate limited. Resets in {wait_time} seconds. Set GITHUB_TOKEN for higher limits."
+                f"Rate limited. Resets in {wait_time} seconds."
+                " Set GITHUB_TOKEN or GH_TOKEN for higher limits."
             )
         return []
 

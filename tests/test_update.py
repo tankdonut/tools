@@ -101,6 +101,22 @@ class TestGetLatestGitHubReleaseVersion:
         assert call_args.kwargs["headers"]["Authorization"] == "Bearer test-token"
 
     @patch("tasks.tools._github.requests.get")
+    def test_with_gh_token_fallback(self, mock_get, monkeypatch):
+        """Test API call falls back to GH_TOKEN when GITHUB_TOKEN is not set."""
+        monkeypatch.setenv("GH_TOKEN", "gh-test-token")
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"tag_name": "v1.2.3", "published_at": None}
+        mock_get.return_value = mock_response
+
+        get_latest_github_release_version("test", "repo")
+
+        call_args = mock_get.call_args
+        assert "Authorization" in call_args.kwargs["headers"]
+        assert call_args.kwargs["headers"]["Authorization"] == "Bearer gh-test-token"
+
+    @patch("tasks.tools._github.requests.get")
     def test_failure_status_code(self, mock_get):
         """Test handling of non-200 status codes."""
         mock_response = Mock()
