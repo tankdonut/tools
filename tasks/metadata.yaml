@@ -20,7 +20,7 @@ asdf:
 
   repo_url: https://github.com/asdf-vm/asdf
   license: MIT
-  version: 0.18.1
+  version: 0.19.0
 bd:
   description: >
     Beads - A memory upgrade for your coding agent
@@ -63,8 +63,8 @@ ctlptl:
 
   repo_url: https://github.com/tilt-dev/ctlptl
   license: APACHE-2.0
-  version: 0.9.2
-  sha256: 7f3e996d1ccb81a64acb475500b497a2586f0f41e926461c924b8194c668e874
+  version: 0.9.3
+  sha256: c5130e27e367750f7d813558720921391233c98f35d6c3221793890b872769db
 doctl:
   description: >
     A command line tool for DigitalOcean services
@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.14.20
-  sha256: 1707133022382ea8c8cc5bc47ab1db52fa206bd9baf8d3ad4d862b489dbb448f
+  version: 1.14.22
+  sha256: 6946cd20989c7736a321b9bad37130dcc3227467b178fd39e20a4a0284ee8165
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -206,8 +206,8 @@ skaffold:
 
   repo_url: https://github.com/GoogleContainerTools/skaffold
   license: APACHE-2.0
-  version: 2.18.3
-  sha256: d8bfce071e3e3096736f12f0233d24f16d4baedaadd2181e1eaa1865a346ec3f
+  version: 2.19.0
+  sha256: 8794026e7f0c2fb04c44ebc6a8f4f446a7a68dde8f8868ac5b701903b7973e19
 solc:
   description: >
     Solidity, the Smart Contract Programming Language
