@@ -85,8 +85,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.94.0
-  sha256: 2a70bd5f1554c0af81cb0758ce9cc07765efb6aa2194712d0c45a84f0b15a87b
+  version: 1.94.1
+  sha256: 8f089cc1778062557fb5f0bd64a8ccec079f3d8df8c95cba4591da8d4895efce
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.14.22
-  sha256: 6946cd20989c7736a321b9bad37130dcc3227467b178fd39e20a4a0284ee8165
+  version: 1.14.24
+  sha256: 2edfc17bad3ecba54ae1d9753cef9eca686fdd8a0b0f4b785f9209ee0fc8a6d2
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -184,8 +184,8 @@ packer:
 
   repo_url: https://github.com/hashicorp/packer
   license: MPL-2.0
-  version: 1.15.1
-  sha256: 648d704bec73805a5508ed612185a9e5858ca7d57b730b88b1a54c3af3a91f5f
+  version: 1.15.2
+  sha256: 8cc4bc94a7e6d8806dd754869945287918aaa3c55bebdfa5169e33cd1dcf35c6
 shellcheck:
   description: >
     ShellCheck, a static analysis tool for shell scripts
@@ -294,5 +294,5 @@ tilt:
 
   repo_url: https://github.com/tilt-dev/tilt
   license: APACHE-2.0
-  version: 0.37.1
-  sha256: 38e8e353380f57c03124c2a1ba0728481c728027ac664c1b27a6bdb57f23bf07
+  version: 0.37.2
+  sha256: b0d41266bfa27857c2fcbcefda09da48d40294ca8ab5be88735c4f6ad90b3bfe
