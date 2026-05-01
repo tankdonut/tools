@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'tasks/metadata.yaml'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -35,7 +36,14 @@ jobs:
       - name: Store metadata diff
         id: check-version-changes
         run: |
-          DIFF=$(git diff HEAD~1 HEAD -- tasks/metadata.yaml)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            DIFF=$(git diff "$LAST_TAG" HEAD -- tasks/metadata.yaml)
+            echo "DIFF_BASE=$LAST_TAG" >> "$GITHUB_ENV"
+          else
+            DIFF=$(git diff HEAD~1 HEAD -- tasks/metadata.yaml)
+            echo "DIFF_BASE=HEAD~1" >> "$GITHUB_ENV"
+          fi
           {
             echo "METADATA_DIFF<<GHAEOF"
             echo "$DIFF"
@@ -64,7 +72,7 @@ jobs:
           from tasks.release import calculate_calver_tag, generate_changelog, parse_metadata_diff
 
           diff = subprocess.run(
-              ['git', 'diff', 'HEAD~1', 'HEAD', '--', 'tasks/metadata.yaml'],
+              ['git', 'diff', os.environ.get('DIFF_BASE', 'HEAD~1'), 'HEAD', '--', 'tasks/metadata.yaml'],
               capture_output=True, text=True,
           ).stdout
 
@@ -141,7 +149,7 @@ jobs:
           from tasks.release import parse_metadata_diff, update_changelog_file
 
           diff = subprocess.run(
-              ['git', 'diff', 'HEAD~1', 'HEAD', '--', 'tasks/metadata.yaml'],
+              ['git', 'diff', os.environ.get('DIFF_BASE', 'HEAD~1'), 'HEAD', '--', 'tasks/metadata.yaml'],
               capture_output=True, text=True,
           ).stdout
           changes = parse_metadata_diff(diff)
