@@ -30,8 +30,8 @@ bd:
 
   repo_url: https://github.com/steveyegge/beads
   license: MIT
-  version: 1.0.2
-  sha256: 66280bca14581218684027fee000810c2e40a9c6fe00e876ff64bdcb01a036c0
+  version: 1.0.3
+  sha256: 1ef5dca818d7e81574df9e9f9fc2a16ab711da09b0fa7b822ae162d9a81c8912
 cr:
   description: >
     CLI tool for linting and testing Helm charts
@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.14.24
-  sha256: 2edfc17bad3ecba54ae1d9753cef9eca686fdd8a0b0f4b785f9209ee0fc8a6d2
+  version: 1.14.25
+  sha256: 6542db973fbf404707d275d824fcd7eef20a8003788114eb85067402daf730db
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
