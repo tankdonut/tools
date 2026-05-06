@@ -85,8 +85,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.94.1
-  sha256: 8f089cc1778062557fb5f0bd64a8ccec079f3d8df8c95cba4591da8d4895efce
+  version: 1.94.2
+  sha256: 84f6590679d979b71bfdbcb4ed8b4f14b2dc3176ec721eacf3358c37a7a3dd28
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -129,8 +129,8 @@ k3s:
 
   repo_url: https://github.com/k3s-io/k3s
   license: APACHE-2.0
-  version: 1.35.3
-  sha256: e8661b03d0004e5792da6c2aae7f05de4c54711ee4228d0cce28e02c404626a6
+  version: 1.35.4+k3s1
+  sha256: 080498ece50acdaf23fe5d736f41c616e276a89a4e5605a3f274f39b0fcee85b
 k9s:
   description: >
     🐶 Kubernetes CLI To Manage Your Clusters In Style!
@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.14.25
-  sha256: 6542db973fbf404707d275d824fcd7eef20a8003788114eb85067402daf730db
+  version: 1.14.29
+  sha256: d985e99d7e22446b78fc78a35cfa0ef8b0feff05be5288c4a0e1c6837b7a29f8
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -184,8 +184,8 @@ packer:
 
   repo_url: https://github.com/hashicorp/packer
   license: MPL-2.0
-  version: 1.15.2
-  sha256: 8cc4bc94a7e6d8806dd754869945287918aaa3c55bebdfa5169e33cd1dcf35c6
+  version: 1.15.3
+  sha256: 9ed712c9a8f223c7985d7d21c6b65744bf1c66b8aca333232b96f5ae3fd9c90d
 shellcheck:
   description: >
     ShellCheck, a static analysis tool for shell scripts
@@ -272,8 +272,8 @@ terragrunt:
 
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
-  version: 1.0.2
-  sha256: 4a0e327ec20c7af2c680142c5143ece3236fc3fd6c9de772bd0444a9b95abec2
+  version: 1.0.3
+  sha256: e27c202df4383712e55b39e36dedd9439688ac3ac745c1f71521437f831274b1
 tflint:
   description: >
     A Pluggable Terraform Linter
