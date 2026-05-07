@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.14.29
-  sha256: d985e99d7e22446b78fc78a35cfa0ef8b0feff05be5288c4a0e1c6837b7a29f8
+  version: 1.14.30
+  sha256: 13b2dd32c5549f7b031e8bb67fb8d6e8d87aa9e07bd6f0017620836f1fb7cdce
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -217,8 +217,8 @@ solc:
 
   repo_url: https://github.com/ethereum/solidity
   license: GPL-3.0
-  version: 0.8.34
-  sha256: d40adc6f9fdbb22a97d32a02fa05688bf2ee7886affc48c9851b0afd4a726b39
+  version: 0.8.35
+  sha256: fa8ac9a32d301ad023a36ee5a29f8e291fe3200c60244e43c142539e82a617f4
 rtk:
   description: >
     High-performance CLI proxy that reduces LLM token consumption by 60-90% on common dev commands
@@ -228,8 +228,8 @@ rtk:
 
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
-  version: 0.37.2
-  sha256: 3dfb7a05636a68687ba1c5aa696fa8d5fcb494447ded86d9eb8b88b7100a37c6
+  version: 0.38.0
+  sha256: 9bafb356450fb0f66a7f2d68d0468d1b1e270163f1620574e67a4c8f816d9610
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
@@ -250,8 +250,8 @@ terraform:
 
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
-  version: 1.14.9
-  sha256: 2e5cffc20a0b48a67a76268723bd5a10b8666f69b2aa4f04906e206726bedd63
+  version: 1.15.0
+  sha256: dcd4b31225dd960404f744315c0c3823a7deeda43bca0256a17fc762092d7e1b
 terraform-docs:
   description: >
     Generate docs from terraform modules
