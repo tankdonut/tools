@@ -125,7 +125,7 @@ k3s:
     Lightweight Kubernetes
 
   download_url: >
-    {{repo_url}}/releases/download/v{{version}}+k3s1/{{name}}{{ "-%s" | format(arch) if arch != "amd64" else "" }}
+    {{repo_url}}/releases/download/v{{version}}/{{name}}{{ "-%s" | format(arch) if arch != "amd64" else "" }}
 
   repo_url: https://github.com/k3s-io/k3s
   license: APACHE-2.0
