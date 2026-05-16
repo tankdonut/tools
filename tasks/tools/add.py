@@ -28,7 +28,7 @@ def add(
     if package_name in metadata:
         raise ValueError(f"Package '{package_name}' already exists")
 
-    latest_tag, _ = get_latest_github_release_version(owner, repo)
+    latest_tag, _, _ = get_latest_github_release_version(owner, repo)
     if not latest_tag:
         raise ValueError("Unable to determine latest release version")
 

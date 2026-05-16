@@ -206,7 +206,7 @@ skaffold:
 
   repo_url: https://github.com/GoogleContainerTools/skaffold
   license: APACHE-2.0
-  version: 2.20.0
+  version: 2.19.0
   sha256: 8794026e7f0c2fb04c44ebc6a8f4f446a7a68dde8f8868ac5b701903b7973e19
 solc:
   description: >

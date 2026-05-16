@@ -18,7 +18,7 @@ class TestDetectUpdates:
     @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_detect_updates_found(self, mock_latest, sample_metadata):
         """Test detecting updates when newer versions exist."""
-        mock_latest.side_effect = [("v2.1.0", None), ("v3.0.0", None)]
+        mock_latest.side_effect = [("v2.1.0", None, 1), ("v3.0.0", None, 1)]
         updates, _skipped = detect_updates(sample_metadata)
 
         assert len(updates) == 2
@@ -29,7 +29,7 @@ class TestDetectUpdates:
     @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_detect_updates_none_found(self, mock_latest, sample_metadata):
         """Test when no updates are available."""
-        mock_latest.side_effect = [("v1.0.0", None), ("v2.0.0", None)]
+        mock_latest.side_effect = [("v1.0.0", None, 1), ("v2.0.0", None, 1)]
         updates, _skipped = detect_updates(sample_metadata)
 
         assert len(updates) == 0
@@ -37,7 +37,7 @@ class TestDetectUpdates:
     @patch("tasks.tools._updates.get_latest_github_release_version")
     def test_detect_updates_invalid_version(self, mock_latest, sample_metadata):
         """Test handling of invalid version tags."""
-        mock_latest.side_effect = [("invalid-tag", None), ("v3.0.0", None)]
+        mock_latest.side_effect = [("invalid-tag", None, 1), ("v3.0.0", None, 1)]
         updates, _skipped = detect_updates(sample_metadata)
 
         assert len(updates) == 1
@@ -79,11 +79,15 @@ class TestGetLatestGitHubReleaseVersion:
         """Test successful API call."""
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"tag_name": "v1.2.3", "published_at": None}
+        mock_response.json.return_value = {
+            "tag_name": "v1.2.3",
+            "published_at": None,
+            "assets": [{"name": "binary"}],
+        }
         mock_get.return_value = mock_response
 
         version = get_latest_github_release_version("test", "repo")
-        assert version == ("v1.2.3", None)
+        assert version == ("v1.2.3", None, 1)
 
     @patch("tasks.tools._github.requests.get")
     def test_with_auth_token(self, mock_get, monkeypatch):
@@ -91,7 +95,11 @@ class TestGetLatestGitHubReleaseVersion:
         monkeypatch.setenv("GITHUB_TOKEN", "test-token")
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"tag_name": "v1.2.3", "published_at": None}
+        mock_response.json.return_value = {
+            "tag_name": "v1.2.3",
+            "published_at": None,
+            "assets": [{"name": "binary"}],
+        }
         mock_get.return_value = mock_response
 
         get_latest_github_release_version("test", "repo")
@@ -107,7 +115,11 @@ class TestGetLatestGitHubReleaseVersion:
         monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"tag_name": "v1.2.3", "published_at": None}
+        mock_response.json.return_value = {
+            "tag_name": "v1.2.3",
+            "published_at": None,
+            "assets": [{"name": "binary"}],
+        }
         mock_get.return_value = mock_response
 
         get_latest_github_release_version("test", "repo")
@@ -124,7 +136,22 @@ class TestGetLatestGitHubReleaseVersion:
         mock_get.return_value = mock_response
 
         version = get_latest_github_release_version("test", "repo")
-        assert version == (None, None)
+        assert version == (None, None, 0)
+
+    @patch("tasks.tools._github.requests.get")
+    def test_no_assets_returns_zero(self, mock_get):
+        """Test that release with no assets returns asset_count=0."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "tag_name": "v2.0.0",
+            "published_at": "2025-01-01T00:00:00Z",
+            "assets": [],
+        }
+        mock_get.return_value = mock_response
+
+        version = get_latest_github_release_version("test", "repo")
+        assert version == ("v2.0.0", "2025-01-01T00:00:00Z", 0)
 
 
 class TestAutomationDryRun:
@@ -229,7 +256,7 @@ class TestReleaseAgeFilter:
         # Mock a release published 6 days ago
         six_days_ago = datetime.now(UTC) - timedelta(days=6)
         published_at = six_days_ago.isoformat()
-        mock_latest.return_value = ("v2.0.0", published_at)
+        mock_latest.return_value = ("v2.0.0", published_at, 1)
 
         # Current version is 1.0.0, latest is 2.0.0 but only 6 days old
         metadata = {"test-pkg": {"version": "1.0.0", "repo_url": "https://github.com/test/repo"}}
@@ -253,7 +280,7 @@ class TestReleaseAgeFilter:
         # Mock a release published exactly 7 days ago
         seven_days_ago = datetime.now(UTC) - timedelta(days=7)
         published_at = seven_days_ago.isoformat()
-        mock_latest.return_value = ("v2.0.0", published_at)
+        mock_latest.return_value = ("v2.0.0", published_at, 1)
 
         metadata = {"test-pkg": {"version": "1.0.0", "repo_url": "https://github.com/test/repo"}}
 
@@ -275,7 +302,7 @@ class TestReleaseAgeFilter:
         # Mock a release published 8 days ago
         eight_days_ago = datetime.now(UTC) - timedelta(days=8)
         published_at = eight_days_ago.isoformat()
-        mock_latest.return_value = ("v2.0.0", published_at)
+        mock_latest.return_value = ("v2.0.0", published_at, 1)
 
         metadata = {"test-pkg": {"version": "1.0.0", "repo_url": "https://github.com/test/repo"}}
 
@@ -293,7 +320,7 @@ class TestReleaseAgeFilter:
         from tasks.tools._updates import check_package_update
 
         # Mock a release with no published_at (None)
-        mock_latest.return_value = ("v2.0.0", None)
+        mock_latest.return_value = ("v2.0.0", None, 1)
 
         metadata = {"test-pkg": {"version": "1.0.0", "repo_url": "https://github.com/test/repo"}}
 
@@ -320,24 +347,28 @@ class TestGetPreviousGitHubReleases:
                 "published_at": "2025-01-15T00:00:00Z",
                 "draft": False,
                 "prerelease": False,
+                "assets": [{"name": "binary"}],
             },
             {
                 "tag_name": "v1.9.0",
                 "published_at": "2025-01-10T00:00:00Z",
                 "draft": False,
                 "prerelease": False,
+                "assets": [{"name": "binary"}],
             },
             {
                 "tag_name": "v1.8.0",
                 "published_at": "2025-01-05T00:00:00Z",
                 "draft": True,
                 "prerelease": False,
+                "assets": [{"name": "binary"}],
             },
             {
                 "tag_name": "v1.7.0",
                 "published_at": "2025-01-01T00:00:00Z",
                 "draft": False,
                 "prerelease": True,
+                "assets": [{"name": "binary"}],
             },
         ]
         mock_get.return_value = mock_response
@@ -345,8 +376,8 @@ class TestGetPreviousGitHubReleases:
         result = get_previous_github_releases("test", "repo")
 
         assert len(result) == 2
-        assert result[0] == ("v2.0.0", "2025-01-15T00:00:00Z")
-        assert result[1] == ("v1.9.0", "2025-01-10T00:00:00Z")
+        assert result[0] == ("v2.0.0", "2025-01-15T00:00:00Z", 1)
+        assert result[1] == ("v1.9.0", "2025-01-10T00:00:00Z", 1)
 
     @patch("tasks.tools._github.requests.get")
     def test_empty_releases(self, mock_get):
@@ -436,10 +467,10 @@ class TestReleaseFallback:
         three_days_ago = (now - timedelta(days=3)).isoformat()
         ten_days_ago = (now - timedelta(days=10)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_latest.return_value = ("v1.3.9", three_days_ago, 1)
         mock_previous.return_value = [
-            ("v1.3.9", three_days_ago),
-            ("v1.3.8", ten_days_ago),
+            ("v1.3.9", three_days_ago, 1),
+            ("v1.3.8", ten_days_ago, 1),
         ]
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
@@ -463,10 +494,10 @@ class TestReleaseFallback:
         three_days_ago = (now - timedelta(days=3)).isoformat()
         five_days_ago = (now - timedelta(days=5)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_latest.return_value = ("v1.3.9", three_days_ago, 1)
         mock_previous.return_value = [
-            ("v1.3.9", three_days_ago),
-            ("v1.3.8", five_days_ago),
+            ("v1.3.9", three_days_ago, 1),
+            ("v1.3.8", five_days_ago, 1),
         ]
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
@@ -489,10 +520,10 @@ class TestReleaseFallback:
         three_days_ago = (now - timedelta(days=3)).isoformat()
         ten_days_ago = (now - timedelta(days=10)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_latest.return_value = ("v1.3.9", three_days_ago, 1)
         mock_previous.return_value = [
-            ("v1.3.9", three_days_ago),
-            ("v1.3.5", ten_days_ago),
+            ("v1.3.9", three_days_ago, 1),
+            ("v1.3.5", ten_days_ago, 1),
         ]
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
@@ -514,10 +545,10 @@ class TestReleaseFallback:
         three_days_ago = (now - timedelta(days=3)).isoformat()
         ten_days_ago = (now - timedelta(days=10)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_latest.return_value = ("v1.3.9", three_days_ago, 1)
         mock_previous.return_value = [
-            ("v1.3.9", three_days_ago),
-            ("v1.3.4", ten_days_ago),
+            ("v1.3.9", three_days_ago, 1),
+            ("v1.3.4", ten_days_ago, 1),
         ]
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
@@ -538,7 +569,7 @@ class TestReleaseFallback:
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_latest.return_value = ("v1.3.9", three_days_ago, 1)
         mock_previous.return_value = []
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
@@ -559,7 +590,7 @@ class TestReleaseFallback:
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_latest.return_value = ("v1.3.9", three_days_ago, 1)
         mock_previous.side_effect = Exception("API error")
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
@@ -581,11 +612,11 @@ class TestReleaseFallback:
         three_days_ago = (now - timedelta(days=3)).isoformat()
         ten_days_ago = (now - timedelta(days=10)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_latest.return_value = ("v1.3.9", three_days_ago, 1)
         mock_previous.return_value = [
-            ("v1.3.9", three_days_ago),
-            ("v1.3.8", None),
-            ("v1.3.7", ten_days_ago),
+            ("v1.3.9", three_days_ago, 1),
+            ("v1.3.8", None, 1),
+            ("v1.3.7", ten_days_ago, 1),
         ]
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
@@ -609,12 +640,12 @@ class TestReleaseFallback:
         six_days_ago = (now - timedelta(days=6)).isoformat()
         fifteen_days_ago = (now - timedelta(days=15)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", two_days_ago)
+        mock_latest.return_value = ("v1.3.9", two_days_ago, 1)
         mock_previous.return_value = [
-            ("v1.3.9", two_days_ago),
-            ("v1.3.8", four_days_ago),
-            ("v1.3.7", six_days_ago),
-            ("v1.3.6", fifteen_days_ago),
+            ("v1.3.9", two_days_ago, 1),
+            ("v1.3.8", four_days_ago, 1),
+            ("v1.3.7", six_days_ago, 1),
+            ("v1.3.6", fifteen_days_ago, 1),
         ]
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
@@ -638,12 +669,12 @@ class TestReleaseFallback:
         six_days_ago = (now - timedelta(days=6)).isoformat()
         fifteen_days_ago = (now - timedelta(days=15)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", two_days_ago)
+        mock_latest.return_value = ("v1.3.9", two_days_ago, 1)
         mock_previous.return_value = [
-            ("v1.3.9", two_days_ago),
-            ("v1.3.8", four_days_ago),
-            ("v1.3.7", six_days_ago),
-            ("v1.3.6", fifteen_days_ago),
+            ("v1.3.9", two_days_ago, 1),
+            ("v1.3.8", four_days_ago, 1),
+            ("v1.3.7", six_days_ago, 1),
+            ("v1.3.6", fifteen_days_ago, 1),
         ]
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
@@ -672,7 +703,7 @@ class TestReleaseFallback:
         now = datetime.now(UTC)
         eight_days_ago = (now - timedelta(days=8)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", eight_days_ago)
+        mock_latest.return_value = ("v1.3.9", eight_days_ago, 1)
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
 
@@ -694,7 +725,7 @@ class TestReleaseFallback:
         now = datetime.now(UTC)
         three_days_ago = (now - timedelta(days=3)).isoformat()
 
-        mock_latest.return_value = ("v1.3.9", three_days_ago)
+        mock_latest.return_value = ("v1.3.9", three_days_ago, 1)
         mock_previous.return_value = []
 
         metadata = {"version": "1.3.5", "repo_url": "https://github.com/test/repo"}
@@ -708,6 +739,118 @@ class TestReleaseFallback:
         assert len(cv) == 1
         assert cv[0]["version"] == "1.3.9"
         assert cv[0]["status"] == "too_young"
+
+
+class TestNoAssetFallback:
+    """Test fallback when latest release has no assets (0 assets)."""
+
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
+    def test_no_assets_skips_to_previous(self, mock_latest, mock_previous):
+        """Release with 0 assets is skipped, falls back to previous with assets."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.tools._updates import check_package_update
+
+        now = datetime.now(UTC)
+        ten_days_ago = (now - timedelta(days=10)).isoformat()
+
+        mock_latest.return_value = ("v2.20.0", ten_days_ago, 0)
+        mock_previous.return_value = [
+            ("v2.20.0", ten_days_ago, 0),
+            ("v2.19.0", ten_days_ago, 1),
+        ]
+
+        metadata = {"version": "2.18.0", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("skaffold", metadata)
+
+        assert result is not None
+        assert result["package"] == "skaffold"
+        assert result["from_version"] == "2.18.0"
+        assert result["to_version"] == "2.19.0"
+
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
+    def test_no_assets_all_previous_also_no_assets(self, mock_latest, mock_previous):
+        """When all previous releases also have 0 assets, return skip info."""
+        from tasks.tools._updates import check_package_update
+
+        mock_latest.return_value = ("v2.20.0", None, 0)
+        mock_previous.return_value = [
+            ("v2.19.0", None, 0),
+            ("v2.18.0", None, 0),
+        ]
+
+        metadata = {"version": "2.17.0", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("skaffold", metadata)
+
+        assert result is not None
+        assert "skipped_version" in result
+        assert result["skipped_version"] == "2.20.0"
+        assert "no assets" in result["reason"]
+
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
+    def test_no_assets_skip_info_includes_checked_versions(self, mock_latest, mock_previous):
+        """Skip info includes checked_versions with no_assets status."""
+        from tasks.tools._updates import check_package_update
+
+        mock_latest.return_value = ("v2.20.0", None, 0)
+        mock_previous.return_value = []
+
+        metadata = {"version": "2.19.0", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("skaffold", metadata)
+
+        assert result is not None
+        assert "skipped_version" in result
+        assert "checked_versions" in result
+        cv = result["checked_versions"]
+        assert cv[0]["version"] == "2.20.0"
+        assert cv[0]["status"] == "no_assets"
+
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
+    def test_no_assets_equal_to_current_returns_none(self, mock_latest, mock_previous):
+        """When no-assets release version equals current, return None."""
+        from tasks.tools._updates import check_package_update
+
+        mock_latest.return_value = ("v2.19.0", None, 0)
+        mock_previous.return_value = []
+
+        metadata = {"version": "2.19.0", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("skaffold", metadata)
+
+        assert result is None
+
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
+    def test_no_assets_mixed_with_too_young(self, mock_latest, mock_previous):
+        """No-assets releases and too-young releases both skipped in fallback walk."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.tools._updates import check_package_update
+
+        now = datetime.now(UTC)
+        three_days_ago = (now - timedelta(days=3)).isoformat()
+        ten_days_ago = (now - timedelta(days=10)).isoformat()
+
+        mock_latest.return_value = ("v2.20.0", three_days_ago, 0)
+        mock_previous.return_value = [
+            ("v2.20.0", three_days_ago, 0),
+            ("v2.19.0", three_days_ago, 1),
+            ("v2.18.0", ten_days_ago, 1),
+        ]
+
+        metadata = {"version": "2.17.0", "repo_url": "https://github.com/test/repo"}
+
+        result = check_package_update("skaffold", metadata)
+
+        assert result is not None
+        assert result["to_version"] == "2.18.0"
 
 
 class TestFormatCheckedVersions:
@@ -767,9 +910,9 @@ class TestDetectUpdatesDisplay:
         mock_progress.__exit__ = Mock(return_value=False)
         mock_progress_cls.return_value = mock_progress
 
-        mock_latest.side_effect = [("v2.0.0", two_days_ago), ("v3.0.0", ten_days_ago)]
+        mock_latest.side_effect = [("v2.0.0", two_days_ago, 1), ("v3.0.0", ten_days_ago, 1)]
         mock_previous.side_effect = [
-            [("v2.0.0", two_days_ago), ("v1.9.0", ten_days_ago)],
+            [("v2.0.0", two_days_ago, 1), ("v1.9.0", ten_days_ago, 1)],
             [],
         ]
 
