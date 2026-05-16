@@ -65,7 +65,9 @@ def _try_previous_release(
     except ValueError:
         return None, []
 
-    for tag, published_at in releases:
+    for tag, published_at, asset_count in releases:
+        if asset_count == 0:
+            continue
         release_version = extract_semver_from_tag(tag)
         if not release_version:
             continue
@@ -115,12 +117,40 @@ def check_package_update(
     if not owner or not repo:
         return None
     try:
-        latest_tag, published_at = get_latest_github_release_version(owner, repo)
+        latest_tag, published_at, asset_count = get_latest_github_release_version(owner, repo)
     except Exception as e:
         logger.warning("Failed to check update for %s: %s", name, e)
         return None
     if not latest_tag:
         return None
+    if asset_count == 0:
+        fallback, fallback_checked = _try_previous_release(
+            name, owner, repo, current_version, cooldown=cooldown
+        )
+        skipped_version = extract_semver_from_tag(latest_tag)
+        if not skipped_version:
+            return None
+        try:
+            if semver.Version.parse(skipped_version) == semver.Version.parse(current_version):
+                return None
+        except ValueError:
+            pass
+        latest_entry = {
+            "version": skipped_version,
+            "age_days": 0,
+            "status": "no_assets",
+        }
+        deduped = [e for e in fallback_checked if e["version"] != skipped_version]
+        if fallback:
+            fallback["checked_versions"] = [latest_entry] + deduped
+            return fallback
+        return {
+            "package": name,
+            "current_version": current_version,
+            "skipped_version": skipped_version,
+            "reason": f"Release has no assets (v{skipped_version})",
+            "checked_versions": [latest_entry] + deduped,
+        }
     if published_at and cooldown > 0:
         try:
             published_date = datetime.fromisoformat(published_at.replace("Z", "+00:00"))

@@ -35,15 +35,15 @@ def get_owner_and_repo(url: str):
     wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
     retry=tenacity.retry_if_exception_type((requests.exceptions.Timeout, GitHubRateLimitError)),
 )
-def get_latest_github_release_version(owner: str, repo: str) -> tuple[str | None, str | None]:
-    """Get latest GitHub release version and published_at with retry logic.
+def get_latest_github_release_version(owner: str, repo: str) -> tuple[str | None, str | None, int]:
+    """Get latest GitHub release version, published_at, and asset count with retry logic.
 
     Returns:
-        (tag_name, published_at) on success
-        (None, None) on failure
+        (tag_name, published_at, asset_count) on success
+        (None, None, 0) on failure
     """
     if not owner or not repo:
-        return None, None
+        return None, None, 0
 
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
     headers = {
@@ -70,16 +70,16 @@ def get_latest_github_release_version(owner: str, repo: str) -> tuple[str | None
                 f"Rate limited. Resets in {wait_time} seconds."
                 " Set GITHUB_TOKEN or GH_TOKEN for higher limits."
             )
-        return None, None
+        return None, None, 0
 
     if response.status_code == 429:
         raise GitHubRateLimitError("Too many requests")
 
     if response.status_code != 200:
-        return None, None
+        return None, None, 0
 
     data = response.json()
-    return data.get("tag_name"), data.get("published_at")
+    return data.get("tag_name"), data.get("published_at"), len(data.get("assets", []))
 
 
 @tenacity.retry(
@@ -89,8 +89,11 @@ def get_latest_github_release_version(owner: str, repo: str) -> tuple[str | None
 )
 def get_previous_github_releases(
     owner: str, repo: str, limit: int = 10
-) -> list[tuple[str, str | None]]:
-    """Get previous GitHub releases via GitHub REST API, ordered newest first."""
+) -> list[tuple[str, str | None, int]]:
+    """Get previous GitHub releases via GitHub REST API, ordered newest first.
+
+    Each entry is (tag_name, published_at, asset_count).
+    """
     if not owner or not repo:
         return []
 
@@ -128,9 +131,15 @@ def get_previous_github_releases(
 
     data = response.json()
 
-    releases: list[tuple[str, str | None]] = []
+    releases: list[tuple[str, str | None, int]] = []
     for release in data:
         if release.get("draft", False) or release.get("prerelease", False):
             continue
-        releases.append((release.get("tag_name", ""), release.get("published_at")))
+        releases.append(
+            (
+                release.get("tag_name", ""),
+                release.get("published_at"),
+                len(release.get("assets", [])),
+            )
+        )
     return releases
