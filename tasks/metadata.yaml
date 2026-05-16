@@ -9,8 +9,8 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.3.9
-  sha256: c17c57a16a79a8a3e6fdf1eadcfaf475ae621bbacf89467f75a3b96a1cd460fd
+  version: 3.4.2
+  sha256: d4cb1ac8002baab8afaca2da3de597b613df8459074bc7c6d96dc95161c2a33f
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -30,8 +30,8 @@ bd:
 
   repo_url: https://github.com/steveyegge/beads
   license: MIT
-  version: 1.0.3
-  sha256: 1ef5dca818d7e81574df9e9f9fc2a16ab711da09b0fa7b822ae162d9a81c8912
+  version: 1.0.4
+  sha256: 643e602e27f666c8726abff0f22001e2b5883988fa960204bde20a3129d448a5
 cr:
   description: >
     CLI tool for linting and testing Helm charts
@@ -74,8 +74,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.155.0
-  sha256: 94f572c89d74a6a894f6238bae07cd55c599a6539f8da7ec9d1a89f09a292180
+  version: 1.159.0
+  sha256: 0f90be5397ccb82b1ad66ab9ebb356ee5446eb128963331aa953ef4e43693927
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -96,8 +96,8 @@ flux:
 
   repo_url: https://github.com/fluxcd/flux2
   license: APACHE-2.0
-  version: 2.8.6
-  sha256: c53cc990ae266f7840f64c81515d701d8821d558a9062aa4211d71b38cf044be
+  version: 2.8.7
+  sha256: 493a8df42bf89f8481f03afb44b6f4801a76ec0f0b9233042487d0cb5c6cf4e3
 helm-docs:
   description: >
     A tool for automatically generating markdown documentation for helm charts
@@ -129,8 +129,8 @@ k3s:
 
   repo_url: https://github.com/k3s-io/k3s
   license: APACHE-2.0
-  version: 1.35.4+k3s1
-  sha256: 080498ece50acdaf23fe5d736f41c616e276a89a4e5605a3f274f39b0fcee85b
+  version: 1.36.0+k3s1
+  sha256: efa953454c8f7bf8d9d35c2dad2a76c9bdaac6860d60361629a3a2719009876b
 k9s:
   description: >
     🐶 Kubernetes CLI To Manage Your Clusters In Style!
@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.14.39
-  sha256: f34bda4a81a7e0fe29f63209d3d9a1242899a2269181e2c8e11106558651b878
+  version: 1.15.3
+  sha256: f8ae8678c9bccdbaf99777f36ff2d5efe689d473384f2e94b84d6cda256d2540
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -206,7 +206,7 @@ skaffold:
 
   repo_url: https://github.com/GoogleContainerTools/skaffold
   license: APACHE-2.0
-  version: 2.19.0
+  version: 2.20.0
   sha256: 8794026e7f0c2fb04c44ebc6a8f4f446a7a68dde8f8868ac5b701903b7973e19
 solc:
   description: >
@@ -228,8 +228,8 @@ rtk:
 
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
-  version: 0.38.0
-  sha256: 9bafb356450fb0f66a7f2d68d0468d1b1e270163f1620574e67a4c8f816d9610
+  version: 0.40.0
+  sha256: a75d210a445874106bc16da2b4efba01d36d297afa33ec134728f2d5f42ef5af
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
@@ -250,8 +250,8 @@ terraform:
 
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
-  version: 1.15.1
-  sha256: 0921fee8c8435253ca49390a02109e906042e611a4e17f69e922261f5176c74f
+  version: 1.15.3
+  sha256: c3d4b579064745a5f7e918125db23b12ba52a8a7287adb9f32c49d637e02e3bf
 terraform-docs:
   description: >
     Generate docs from terraform modules
@@ -261,8 +261,8 @@ terraform-docs:
 
   repo_url: https://github.com/segmentio/terraform-docs
   license: MIT
-  version: 0.22.0
-  sha256: 8ec66616777c66f3e622af4f2853e8ae399f38908ad4b262c9c526dd42501369
+  version: 0.24.0
+  sha256: 9005daf969de0b50134493a2c00078b49f5f5b39d021cda7c89bf4d4f3d776d3
 terragrunt:
   description: >
     Terragrunt is a thin wrapper for Terraform that provides extra tools for working with multiple Terraform modules.
@@ -272,8 +272,8 @@ terragrunt:
 
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
-  version: 1.0.3
-  sha256: e27c202df4383712e55b39e36dedd9439688ac3ac745c1f71521437f831274b1
+  version: 1.0.4
+  sha256: 387509aa15d3f38a93d0888ace2bd67c3e5eea841e1f4d585ea2174d566f35e9
 tflint:
   description: >
     A Pluggable Terraform Linter
@@ -283,8 +283,8 @@ tflint:
 
   repo_url: https://github.com/terraform-linters/tflint
   license: MPL 2.0
-  version: 0.62.0
-  sha256: 000400d7f4c2236d9ed4b35fec3ee95617c3747571593cc6138169fc78cc226a
+  version: 0.62.1
+  sha256: c004ec45ade3caf87cd4089feb1d2af9f7df57b13140a36df8a63c0a8cc69f14
 tilt:
   description: >
     Define your dev environment as code. For microservice apps on Kubernetes.
