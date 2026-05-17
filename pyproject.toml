@@ -23,6 +23,11 @@ dependencies = [
   "tenacity (>=9.0.0,<10.0.0)",
 ]
 
+[dependency-groups]
+dev = [
+  "pre-commit>=4.0.0",
+]
+
 [tool.uv]
 exclude-newer = "P7D"
 
