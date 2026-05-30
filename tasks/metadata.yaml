@@ -96,8 +96,8 @@ flux:
 
   repo_url: https://github.com/fluxcd/flux2
   license: APACHE-2.0
-  version: 2.8.7
-  sha256: 493a8df42bf89f8481f03afb44b6f4801a76ec0f0b9233042487d0cb5c6cf4e3
+  version: 2.8.8
+  sha256: 3791d8fbb73b967ada021186f7b46686a2b180ce206d3c279c3f2ad183877a7f
 helm-docs:
   description: >
     A tool for automatically generating markdown documentation for helm charts
@@ -129,8 +129,8 @@ k3s:
 
   repo_url: https://github.com/k3s-io/k3s
   license: APACHE-2.0
-  version: 1.36.0+k3s1
-  sha256: efa953454c8f7bf8d9d35c2dad2a76c9bdaac6860d60361629a3a2719009876b
+  version: 1.36.1+k3s1
+  sha256: a443db3fe9820cd93617ae67e4386d87c1514c1e96ceb30f4c2791c39065653c
 k9s:
   description: >
     🐶 Kubernetes CLI To Manage Your Clusters In Style!
@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.15.3
-  sha256: f8ae8678c9bccdbaf99777f36ff2d5efe689d473384f2e94b84d6cda256d2540
+  version: 1.15.10
+  sha256: a4c0c94a7fdbf637e3ae479c046ca49e925370b4cee503dfba7ab677a13cd0c5
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -206,8 +206,8 @@ skaffold:
 
   repo_url: https://github.com/GoogleContainerTools/skaffold
   license: APACHE-2.0
-  version: 2.19.0
-  sha256: 8794026e7f0c2fb04c44ebc6a8f4f446a7a68dde8f8868ac5b701903b7973e19
+  version: 2.21.0
+  sha256: 255bc19ec6ccd8bca3fd122996d2cafd1af0abf3c3740a5b554931ce7b17a10e
 solc:
   description: >
     Solidity, the Smart Contract Programming Language
@@ -272,8 +272,8 @@ terragrunt:
 
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
-  version: 1.0.4
-  sha256: 387509aa15d3f38a93d0888ace2bd67c3e5eea841e1f4d585ea2174d566f35e9
+  version: 1.0.5
+  sha256: 729d59f7655e25e8db4abd73a422d002d80720ef1edbd2f4a03322e79e444101
 tflint:
   description: >
     A Pluggable Terraform Linter
