@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.15.10
-  sha256: a4c0c94a7fdbf637e3ae479c046ca49e925370b4cee503dfba7ab677a13cd0c5
+  version: 1.15.11
+  sha256: 49317253722c698394980e1921ff28e919d79bb29d5c3f4cf314a4adaf7037cd
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -228,8 +228,8 @@ rtk:
 
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
-  version: 0.40.0
-  sha256: a75d210a445874106bc16da2b4efba01d36d297afa33ec134728f2d5f42ef5af
+  version: 0.42.0
+  sha256: cdd4f87ac97ce958f71b53a991880d6adcc41cc5bca1044175a64630980152be
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
@@ -272,8 +272,8 @@ terragrunt:
 
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
-  version: 1.0.5
-  sha256: 729d59f7655e25e8db4abd73a422d002d80720ef1edbd2f4a03322e79e444101
+  version: 1.0.6
+  sha256: 896dfcd22a1110ea7ccb4b767b01dc9452853d1c246d4c8ec4395da2febb2ba1
 tflint:
   description: >
     A Pluggable Terraform Linter
