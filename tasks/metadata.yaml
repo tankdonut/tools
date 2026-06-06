@@ -9,8 +9,8 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.4.2
-  sha256: d4cb1ac8002baab8afaca2da3de597b613df8459074bc7c6d96dc95161c2a33f
+  version: 3.4.3
+  sha256: fb230f97ba87b393746accf167067e0b75d20d2de5ee7cf847d50d4361f92e5f
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -63,8 +63,8 @@ ctlptl:
 
   repo_url: https://github.com/tilt-dev/ctlptl
   license: APACHE-2.0
-  version: 0.9.3
-  sha256: c5130e27e367750f7d813558720921391233c98f35d6c3221793890b872769db
+  version: 0.9.4
+  sha256: c63a1ec28e60bc3faf6becb76f53355c5cf5e0143dafdd27ad85db5584fa6b1e
 doctl:
   description: >
     A command line tool for DigitalOcean services
@@ -74,8 +74,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.159.0
-  sha256: 0f90be5397ccb82b1ad66ab9ebb356ee5446eb128963331aa953ef4e43693927
+  version: 1.160.1
+  sha256: 615b03e678ffe391b3f3a3afe74a125f7fde1842135b7c3528862eba9ff16168
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -85,8 +85,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.94.2
-  sha256: 84f6590679d979b71bfdbcb4ed8b4f14b2dc3176ec721eacf3358c37a7a3dd28
+  version: 1.95.1
+  sha256: 16cd973d5baa90894f038bb53e42c0b026b047fd59ed98fd59a57f948a277e87
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -118,8 +118,8 @@ k3d:
 
   repo_url: https://github.com/k3d-io/k3d
   license: MIT
-  version: 5.8.3
-  sha256: dbaa79a76ace7f4ca230a1ff41dc7d8a5036a8ad0309e9c54f9bf3836dbe853e
+  version: 5.9.0
+  sha256: 06d8f25bc3a971c4eb29e0ff08429b180402db0f4dec838c9eac427e296800a0
 k3s:
   description: >
     Lightweight Kubernetes
@@ -140,8 +140,8 @@ k9s:
 
   repo_url: https://github.com/derailed/k9s
   license: APACHE-2.0
-  version: 0.50.18
-  sha256: 0b697ed4aa80997f7de4deeed6f1fba73df191b28bf691b1f28d2f45fa2a9e9b
+  version: 0.51.0
+  sha256: c3752ad51a5a4015a113819c4eeb6e55a4d0e4b8e652494797532f6fc8161dd7
 kind:
   description: >
     A tool for running local Kubernetes clusters using Docker
@@ -151,8 +151,8 @@ kind:
 
   repo_url: https://github.com/kubernetes-sigs/kind
   license: MIT
-  version: 0.31.0
-  sha256: eb244cbafcc157dff60cf68693c14c9a75c4e6e6fedaf9cd71c58117cb93e3fa
+  version: 0.32.0
+  sha256: 50030de23cf40a18505f20426f6a8506bedf13c6e509244bd1fa9463721b0f54
 kustomize:
   description: >
     Customization of kubernetes YAML configurations
@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.15.11
-  sha256: 49317253722c698394980e1921ff28e919d79bb29d5c3f4cf314a4adaf7037cd
+  version: 1.16.2
+  sha256: 06a79c5bb7f8d01716b2440712cf67facd36db59188809aeb232374b206bd429
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -228,8 +228,8 @@ rtk:
 
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
-  version: 0.42.0
-  sha256: cdd4f87ac97ce958f71b53a991880d6adcc41cc5bca1044175a64630980152be
+  version: 0.42.3
+  sha256: 5df764a633709cb85d248258d085d24ec95faa8bca0e6835a93cd57cadc4eb9e
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
@@ -272,8 +272,8 @@ terragrunt:
 
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
-  version: 1.0.6
-  sha256: 896dfcd22a1110ea7ccb4b767b01dc9452853d1c246d4c8ec4395da2febb2ba1
+  version: 1.0.7
+  sha256: d3d9c04811a252763f38b89d6237db3b244f36b336684bad82772f5fe3f49442
 tflint:
   description: >
     A Pluggable Terraform Linter
@@ -283,8 +283,8 @@ tflint:
 
   repo_url: https://github.com/terraform-linters/tflint
   license: MPL 2.0
-  version: 0.62.1
-  sha256: c004ec45ade3caf87cd4089feb1d2af9f7df57b13140a36df8a63c0a8cc69f14
+  version: 0.63.1
+  sha256: 8441a7d97df20431f19c9b9d27ff4c63e308c964e86660bc7cc0cf7bbe0725e8
 tilt:
   description: >
     Define your dev environment as code. For microservice apps on Kubernetes.
