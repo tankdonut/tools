@@ -74,8 +74,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.160.1
-  sha256: 615b03e678ffe391b3f3a3afe74a125f7fde1842135b7c3528862eba9ff16168
+  version: 1.161.0
+  sha256: 955771393b8b40b6e53a5babae5c56d8bf3bd775e15fcc3db649a1f61536e541
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -173,8 +173,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.16.2
-  sha256: 06a79c5bb7f8d01716b2440712cf67facd36db59188809aeb232374b206bd429
+  version: 1.17.6
+  sha256: 6cac705f9259415365079961c5f652269ed9e3a4613ce874f15a9d36366bea7d
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -206,8 +206,8 @@ skaffold:
 
   repo_url: https://github.com/GoogleContainerTools/skaffold
   license: APACHE-2.0
-  version: 2.21.0
-  sha256: 255bc19ec6ccd8bca3fd122996d2cafd1af0abf3c3740a5b554931ce7b17a10e
+  version: 2.22.0
+  sha256: a6a4b9c58344da4b41af762ae220e45ea96ffc4664ee4b1f65cdcc8a0b693608
 solc:
   description: >
     Solidity, the Smart Contract Programming Language
@@ -228,8 +228,8 @@ rtk:
 
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
-  version: 0.42.3
-  sha256: 5df764a633709cb85d248258d085d24ec95faa8bca0e6835a93cd57cadc4eb9e
+  version: 0.42.4
+  sha256: 34975116da11e09e502501daf758143e0b22ed3a42a10eb67fb693a6270d9e36
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
@@ -272,8 +272,8 @@ terragrunt:
 
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
-  version: 1.0.7
-  sha256: d3d9c04811a252763f38b89d6237db3b244f36b336684bad82772f5fe3f49442
+  version: 1.0.8
+  sha256: 1ef75087d0a5db968a5e1801f40a7bf5ebdc145ad89ae72c584201fa301d15f4
 tflint:
   description: >
     A Pluggable Terraform Linter
