@@ -188,4 +188,4 @@ cython_debug/
 
 # oh-my-openagent
 #  Orchestration state, plans, and notepads for AI agent workflows
-.sisyphus/
+.omo/
