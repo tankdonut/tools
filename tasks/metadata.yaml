@@ -74,8 +74,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.162.0
-  sha256: 338ad0796fb7a7e20f2e833d88d6daa40d5d6372b39ca54d327e212ff20bc236
+  version: 1.163.0
+  sha256: 04413587db80236f80b02b586db094ffa94096891b14c2b4883b623ff3d59b48
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -85,8 +85,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.95.2
-  sha256: 2250396aefe87454d5dd47382453d8329282991ef608345490426bd2a8572a45
+  version: 1.95.3
+  sha256: 71fb7528405c52e25abd680a15e92222597d5d82f3e3f97eb8184060bc8a02d9
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -140,8 +140,8 @@ k3s:
 
   repo_url: https://github.com/k3s-io/k3s
   license: APACHE-2.0
-  version: 1.36.1+k3s1
-  sha256: a443db3fe9820cd93617ae67e4386d87c1514c1e96ceb30f4c2791c39065653c
+  version: 1.36.2+k3s1
+  sha256: 65a55ec56c24eab44383086166ec620a491952b7e23941a49ddca6e8a4c4b4de
 k9s:
   description: >
     🐶 Kubernetes CLI To Manage Your Clusters In Style!
@@ -184,8 +184,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.17.9
-  sha256: 85aeac95258d409d16ca34f1cfcd74c78d9d1a70b0a4154128b588e1405384f9
+  version: 1.17.11
+  sha256: 6aefcbbb7f04cdb4642be5208ddbfabb3c3d274f816bf42bff72eea5c244dca2
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -195,8 +195,8 @@ packer:
 
   repo_url: https://github.com/hashicorp/packer
   license: MPL-2.0
-  version: 1.15.3
-  sha256: 9ed712c9a8f223c7985d7d21c6b65744bf1c66b8aca333232b96f5ae3fd9c90d
+  version: 1.15.4
+  sha256: 15f97a6a99645c7d5308c609973b5280837b38e112beac413ccbce80da927cf1
 rtk:
   description: >
     High-performance CLI proxy that reduces LLM token consumption by 60-90% on common dev commands
@@ -239,8 +239,8 @@ skaffold:
 
   repo_url: https://github.com/GoogleContainerTools/skaffold
   license: APACHE-2.0
-  version: 2.22.0
-  sha256: a6a4b9c58344da4b41af762ae220e45ea96ffc4664ee4b1f65cdcc8a0b693608
+  version: 2.23.0
+  sha256: c44fb83ec88a9ed2945f3326a6d6b78bb957354535f0efcf653413bcd0e9510d
 solc:
   description: >
     Solidity, the Smart Contract Programming Language
@@ -272,8 +272,8 @@ terraform:
 
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
-  version: 1.15.3
-  sha256: c3d4b579064745a5f7e918125db23b12ba52a8a7287adb9f32c49d637e02e3bf
+  version: 1.15.7
+  sha256: 73bbb8f5188ad75d4fb853fd100ae4d7e146ef7af7db18776109642fdb7759d2
 terraform-docs:
   description: >
     Generate docs from terraform modules
