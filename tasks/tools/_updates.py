@@ -30,6 +30,11 @@ logger = logging.getLogger(__name__)
 # Minimum age in days before a release can be used for updates
 RELEASE_AGE_DAYS = 7
 
+# Tools whose binaries are hosted off-GitHub (e.g. releases.hashicorp.com).
+# Their GitHub releases legitimately have zero assets, so the asset-count gate
+# must not treat them as empty. Mirrors the short-circuit in tasks/lib/digests.py.
+HASHICORP_TOOLS = frozenset({"packer", "terraform"})
+
 
 def _format_checked_versions(checked_versions: list[dict]) -> str:
     """Format checked_versions list into a display string."""
@@ -65,8 +70,9 @@ def _try_previous_release(
     except ValueError:
         return None, []
 
+    external_hosted = name in HASHICORP_TOOLS
     for tag, published_at, asset_count in releases:
-        if asset_count == 0:
+        if asset_count == 0 and not external_hosted:
             continue
         release_version = extract_semver_from_tag(tag)
         if not release_version:
@@ -123,7 +129,7 @@ def check_package_update(
         return None
     if not latest_tag:
         return None
-    if asset_count == 0:
+    if asset_count == 0 and name not in HASHICORP_TOOLS:
         fallback, fallback_checked = _try_previous_release(
             name, owner, repo, current_version, cooldown=cooldown
         )
