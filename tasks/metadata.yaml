@@ -98,6 +98,17 @@ flux:
   license: APACHE-2.0
   version: 2.8.8
   sha256: 3791d8fbb73b967ada021186f7b46686a2b180ce206d3c279c3f2ad183877a7f
+golangci-lint:
+  description: >
+    Fast linters runner for Go
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}-{{version}}-{{os}}-{{arch}}.tar.gz
+
+  repo_url: https://github.com/golangci/golangci-lint
+  license: GPL-3.0
+  version: 2.12.2
+  sha256: 8df580d2670fed8fa984aac0507099af8df275e665215f5c7a2ae3943893a553
 helm-docs:
   description: >
     A tool for automatically generating markdown documentation for helm charts
