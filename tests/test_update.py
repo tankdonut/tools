@@ -853,6 +853,73 @@ class TestNoAssetFallback:
         assert result["to_version"] == "2.18.0"
 
 
+class TestHashiCorpExternalHosted:
+    """HashiCorp tools (terraform/packer) host binaries on releases.hashicorp.com,
+    so their GitHub releases legitimately have zero assets. The asset-count gate
+    must not block their updates."""
+
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
+    def test_terraform_zero_assets_returns_update(self, mock_latest, mock_previous):
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.tools._updates import check_package_update
+
+        now = datetime.now(UTC)
+        ten_days_ago = (now - timedelta(days=10)).isoformat()
+
+        mock_latest.return_value = ("v1.15.7", ten_days_ago, 0)
+        mock_previous.return_value = []
+
+        metadata = {
+            "version": "1.15.3",
+            "repo_url": "https://github.com/hashicorp/terraform",
+            "download_url": "https://releases.hashicorp.com/{{name}}/{{version}}/{{name}}_{{version}}_{{os}}_{{arch}}.zip",
+        }
+
+        result = check_package_update("terraform", metadata)
+
+        assert result is not None
+        assert result["package"] == "terraform"
+        assert result["from_version"] == "1.15.3"
+        assert result["to_version"] == "1.15.7"
+        assert "skipped_version" not in result
+
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    @patch("tasks.tools._updates.get_latest_github_release_version")
+    def test_terraform_zero_assets_walks_back(self, mock_latest, mock_previous):
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.tools._updates import check_package_update
+
+        now = datetime.now(UTC)
+        three_days_ago = (now - timedelta(days=3)).isoformat()
+        eight_days_ago = (now - timedelta(days=8)).isoformat()
+        fifteen_days_ago = (now - timedelta(days=15)).isoformat()
+
+        mock_latest.return_value = ("v1.15.7", three_days_ago, 0)
+        mock_previous.return_value = [
+            ("v1.15.7", three_days_ago, 0),
+            ("v1.15.6", eight_days_ago, 0),
+            ("v1.15.5", fifteen_days_ago, 0),
+        ]
+
+        metadata = {
+            "version": "1.15.3",
+            "repo_url": "https://github.com/hashicorp/terraform",
+            "download_url": "https://releases.hashicorp.com/{{name}}/{{version}}/{{name}}_{{version}}_{{os}}_{{arch}}.zip",
+        }
+
+        result = check_package_update("terraform", metadata)
+
+        assert result is not None
+        assert result["to_version"] == "1.15.6"
+        assert "checked_versions" in result
+        versions_in_chain = [cv["version"] for cv in result["checked_versions"]]
+        assert "1.15.7" in versions_in_chain
+        assert "1.15.6" in versions_in_chain
+
+
 class TestFormatCheckedVersions:
     """Test _format_checked_versions helper."""
 
