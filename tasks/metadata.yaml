@@ -186,6 +186,17 @@ packer:
   license: MPL-2.0
   version: 1.15.3
   sha256: 9ed712c9a8f223c7985d7d21c6b65744bf1c66b8aca333232b96f5ae3fd9c90d
+rtk:
+  description: >
+    High-performance CLI proxy that reduces LLM token consumption by 60-90% on common dev commands
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}-{{rust_arch}}-{{ "apple-darwin" if os == "darwin" else "unknown-linux-musl" if rust_arch == "x86_64" else "unknown-linux-gnu" }}.tar.gz
+
+  repo_url: https://github.com/rtk-ai/rtk
+  license: MIT
+  version: 0.42.4
+  sha256: 34975116da11e09e502501daf758143e0b22ed3a42a10eb67fb693a6270d9e36
 shellcheck:
   description: >
     ShellCheck, a static analysis tool for shell scripts
@@ -197,6 +208,17 @@ shellcheck:
   license: GPL-3.0
   version: 0.11.0
   sha256: 8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
+shfmt:
+  description: >
+    A shell parser, formatter, and interpreter with bash and zsh support; includes shfmt
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}_v{{version}}_{{os}}_{{arch}}{{ ".exe" if os == "windows" else "" }}
+
+  repo_url: https://github.com/mvdan/sh
+  license: BSD-3-Clause
+  version: 3.13.1
+  sha256: fb096c5d1ac6beabbdbaa2874d025badb03ee07929f0c9ff67563ce8c75398b1
 skaffold:
   description: >
     Easy and Repeatable Kubernetes Development
@@ -219,17 +241,6 @@ solc:
   license: GPL-3.0
   version: 0.8.35
   sha256: fa8ac9a32d301ad023a36ee5a29f8e291fe3200c60244e43c142539e82a617f4
-rtk:
-  description: >
-    High-performance CLI proxy that reduces LLM token consumption by 60-90% on common dev commands
-
-  download_url: >
-    {{repo_url}}/releases/download/v{{version}}/{{name}}-{{rust_arch}}-{{ "apple-darwin" if os == "darwin" else "unknown-linux-musl" if rust_arch == "x86_64" else "unknown-linux-gnu" }}.tar.gz
-
-  repo_url: https://github.com/rtk-ai/rtk
-  license: MIT
-  version: 0.42.4
-  sha256: 34975116da11e09e502501daf758143e0b22ed3a42a10eb67fb693a6270d9e36
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
