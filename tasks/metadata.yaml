@@ -252,6 +252,17 @@ solc:
   license: GPL-3.0
   version: 0.8.35
   sha256: fa8ac9a32d301ad023a36ee5a29f8e291fe3200c60244e43c142539e82a617f4
+sqlc:
+  description: >
+    Generate type-safe code from SQL
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}_{{version}}_{{os}}_{{arch}}.tar.gz
+
+  repo_url: https://github.com/sqlc-dev/sqlc
+  license: MIT
+  version: 1.31.1
+  sha256: 497ae4fcdfa64c5b0c311ffe4c2bd991e43991e82e5367792ed78bc2dca27354
 starship:
   description: >
     ☄🌌️ The minimal, blazing-fast, and infinitely customizable prompt for any shell!
