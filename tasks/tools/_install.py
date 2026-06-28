@@ -3,12 +3,15 @@ from pathlib import Path
 import shutil
 
 from invoke.context import Context
+from rich.console import Console
 
-from tasks.lib import ROOT_DIR, PackageDownloader, render_template
+from tasks.lib import ROOT_DIR, IntegrityError, PackageDownloader, render_template
 from tasks.tools._metadata import metadata_cache
 
+console = Console()
 
-def check_required_tools(download_url: str) -> None:
+
+def check_required_tools(download_url: str, package_name: str = "") -> None:
     """Check for required command line tools."""
     required = {"curl"}
 
@@ -21,7 +24,8 @@ def check_required_tools(download_url: str) -> None:
 
     for tool in required:
         if not shutil.which(tool):
-            raise RuntimeError(f"Required tool '{tool}' not found in PATH")
+            suffix = f" (required for '{package_name}')" if package_name else ""
+            raise RuntimeError(f"Required tool '{tool}' not found in PATH{suffix}")
 
 
 def resolve_install_path(local: bool = False, dist: bool = True) -> Path:
@@ -50,6 +54,7 @@ def install_single_package(
     name: str,
     install_path: Path,
     force: bool = False,
+    verbose: bool = False,
 ) -> None:
     """Install a single tool."""
     metadata = metadata_cache.get()
@@ -60,25 +65,34 @@ def install_single_package(
     package_metadata = metadata[name]
     download_url = render_template(name, package_metadata, package_metadata["download_url"])
 
-    check_required_tools(download_url)
+    check_required_tools(download_url, package_name=name)
 
     if force and (install_path / name).exists():
-        c.run(f"rm -rvf {install_path}/{name}")
+        shutil.rmtree(install_path / name)
 
     if (install_path / name).exists():
-        print(f"{name} already installed at {install_path}")
-    else:
-        if not install_path.exists():
-            install_path.mkdir(parents=True, exist_ok=True)
+        console.print(f"  [yellow]SKIP[/yellow] {name}: already installed at {install_path}")
+        return
 
-        downloader = PackageDownloader(
-            c,
-            package_name=name,
-            download_url=download_url,
-            install_path=str(install_path),
-            package_exe=package_metadata.get("package_exe", None),
-            binary=package_metadata.get("binary", False),
-            sha256=package_metadata.get("sha256"),
-        )
+    if not install_path.exists():
+        install_path.mkdir(parents=True, exist_ok=True)
 
+    downloader = PackageDownloader(
+        c,
+        package_name=name,
+        download_url=download_url,
+        install_path=str(install_path),
+        package_exe=package_metadata.get("package_exe", None),
+        binary=package_metadata.get("binary", False),
+        sha256=package_metadata.get("sha256"),
+        verbose=verbose,
+    )
+
+    try:
         downloader.download()
+    except IntegrityError:
+        raise
+    except Exception as e:
+        raise RuntimeError(f"Failed to install '{name}' from {download_url}: {e}") from e
+
+    console.print(f"  [green]OK[/green] {name}")
