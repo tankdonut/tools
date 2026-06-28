@@ -263,6 +263,17 @@ starship:
   license: ICS
   version: 1.25.1
   sha256: 4488c11ca632327d1f1f16fb2f102c0646094c35479cd5435991385da43c61ac
+task:
+  description: >
+    A task runner / build tool that aims to be simpler and easier to use than, for example, GNU Make.
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}_{{os}}_{{arch}}.tar.gz
+
+  repo_url: https://github.com/go-task/task
+  license: MIT
+  version: 3.51.1
+  sha256: da7e92f0ff961ef2aae7cfecbad8d1fd2a08d7b09ba968673adf7ff389b243b5
 terraform:
   description: >
     Terraform is a tool for building, changing, and combining infrastructure safely and efficiently.
