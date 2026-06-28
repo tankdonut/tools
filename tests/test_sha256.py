@@ -141,7 +141,7 @@ class TestPackageDownloaderSHA256:
 
         ctx = Mock()
 
-        def fake_run(cmd: str) -> None:
+        def fake_run(cmd: str, **_kwargs: object) -> None:
             if "curl" in cmd and "-o" in cmd:
                 # Extract destination path from curl command
                 parts = cmd.split()
@@ -168,7 +168,7 @@ class TestPackageDownloaderSHA256:
 
         ctx = Mock()
 
-        def fake_run(cmd: str) -> None:
+        def fake_run(cmd: str, **_kwargs: object) -> None:
             if "curl" in cmd and "-o" in cmd:
                 parts = cmd.split()
                 dest_idx = parts.index("-o") + 1
@@ -210,7 +210,7 @@ class TestPackageDownloaderSHA256:
 
         ctx = Mock()
 
-        def fake_run(cmd: str) -> None:
+        def fake_run(cmd: str, **_kwargs: object) -> None:
             if "curl" in cmd and "-o" in cmd:
                 # Write to a temp file that tar would use
                 parts = cmd.split()
@@ -237,7 +237,7 @@ class TestPackageDownloaderSHA256:
 
         ctx = Mock()
 
-        def fake_run(cmd: str) -> None:
+        def fake_run(cmd: str, **_kwargs: object) -> None:
             if "curl" in cmd and "-o" in cmd:
                 parts = cmd.split()
                 dest_idx = parts.index("-o") + 1
@@ -268,7 +268,7 @@ class TestPackageDownloaderSHA256:
 
         ctx = Mock()
 
-        def fake_run(cmd: str) -> None:
+        def fake_run(cmd: str, **_kwargs: object) -> None:
             if "curl" in cmd and "-o" in cmd:
                 parts = cmd.split()
                 dest_idx = parts.index("-o") + 1
