@@ -43,6 +43,17 @@ cr:
   license: APACHE-2.0
   version: 1.8.1
   sha256: 834046b27b00cd6ba451326875c1937d4f2b671063c2053e031434ade73002b5
+crush:
+  description: >
+    Glamourous agentic coding for all
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}_{{version}}_{{os|capitalize}}_{{ "x86_64" if arch == "amd64" else arch }}.tar.gz
+
+  repo_url: https://github.com/charmbracelet/crush
+  license: FSL-1.1-MIT
+  version: 0.83.0
+  sha256: 3c27d777094d90be5d3a12d95c930dd61a97f2ca1773eb525da72ed552a796c6
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
