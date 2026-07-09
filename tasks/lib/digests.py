@@ -26,6 +26,7 @@ DIGEST_FALLBACK: dict[str, tuple[str, str]] = {
     "k9s": ("checksums.sha256", "standard"),
     "kind": ("{name}-{os}-{arch}.sha256sum", "bare"),
     "kustomize": ("checksums.txt", "standard"),
+    "minikube": ("{name}-{os}-{arch}.sha256", "bare"),
     "rtk": ("checksums.txt", "standard"),
     "skaffold": ("{name}-{os}-{arch}.sha256", "bare"),
     "starship": ("{asset}.sha256", "bare"),

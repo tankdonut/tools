@@ -186,6 +186,17 @@ kustomize:
   license: APACHE-2.0
   version: 5.8.1
   sha256: 029a7f0f4e1932c52a0476cf02a0fd855c0bb85694b82c338fc648dcb53a819d
+minikube:
+  description: >
+    Local Kubernetes, focusing on making it easy to learn and develop for Kubernetes.
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}-{{os}}-{{arch}}{{ ".exe" if os == "windows" else "" }}
+
+  repo_url: https://github.com/kubernetes/minikube
+  license: APACHE-2.0
+  version: 1.38.1
+  sha256: 099477eaf248bcb5bcea8ce78a2898e93ac01461c35189da1848c3de82ecd22e
 opencode:
   description: >
     The open source coding agent.
