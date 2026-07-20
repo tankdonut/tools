@@ -9,8 +9,8 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.4.4
-  sha256: b93c312956880c9597a246a7d1e705fbb7ee7f19c5229affdec99b26d5663e09
+  version: 3.4.5
+  sha256: 23303f05a58c1e041324d5645b0f9d6ea338b16bbf32f4a24508f388fcf9f9c0
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -52,8 +52,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.83.0
-  sha256: 3c27d777094d90be5d3a12d95c930dd61a97f2ca1773eb525da72ed552a796c6
+  version: 0.84.1
+  sha256: 14754490a649a1d4d013558fb810ca896457f3c6534a4d59e70709f73282ad76
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -206,8 +206,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.17.16
-  sha256: 802b3f4995b22a105d155ff702f83101c4c1d2584b15d066183e9b02669f6d7f
+  version: 1.17.18
+  sha256: e149d32ee5667c0cd5fb84d0bf8393b312e93782eeb4d74d29bbb0392de7133c
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -272,8 +272,8 @@ solc:
 
   repo_url: https://github.com/ethereum/solidity
   license: GPL-3.0
-  version: 0.8.35
-  sha256: fa8ac9a32d301ad023a36ee5a29f8e291fe3200c60244e43c142539e82a617f4
+  version: 0.8.36
+  sha256: c8d35afdddc3cd2743ee88b8f25e0fecd16e2bdd5f2120f37e52cd9cc45ae0e6
 sqlc:
   description: >
     Generate type-safe code from SQL
