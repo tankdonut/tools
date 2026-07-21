@@ -21,24 +21,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Cache asdf Tools
-        uses: actions/cache@v6
-        id: cache-asdf
-        with:
-          path: ~/.asdf
-          key: asdf-${{ runner.os }}-${{ hashFiles('.tool-versions') }}
-
-      - name: Install Dependencies via asdf
-        uses: asdf-vm/actions/install@v4
-
-      - name: Install Python Dependencies
-        run: uv sync
-
-      - name: Cache pre-commit hooks
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ hashFiles('.tool-versions', '.pre-commit-config.yaml') }}
-
       - name: Execute pre-commit
-        run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
+        uses: tankdonut/github-actions/actions/pre-commit@v1
+        with:
+          install_uv_deps: "true"
+          uv_sync_args: "--group dev"
+          extra_args: "--show-diff-on-failure --color=always --all-files"
