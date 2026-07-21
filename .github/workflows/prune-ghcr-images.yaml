@@ -8,17 +8,14 @@ on:
 env:
   SEMVER_REGEX: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
 
+permissions:
+  packages: write
+
 jobs:
-  cleanup-ghcr:
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write # Required to delete images
-    steps:
-      - name: Cleanup Stale GHCR Images
-        uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4
-        with:
-          package: ${{ github.event.repository.name }}
-          keep-n-tagged: 10
-          exclude-tags: v.*,latest,${{ github.event.repository.default_branch }},${{ env.SEMVER_REGEX }}
-          delete-untagged: true
-          use-regex: true
+  prune:
+    uses: tankdonut/github-actions/.github/workflows/prune-ghcr.yaml@v1
+    with:
+      packages: '["${{ github.event.repository.name }}"]'
+      exclude-tags: "v.*,latest,${{ github.event.repository.default_branch }},${{ env.SEMVER_REGEX }}"
+      keep-n-tagged: "10"
+    secrets: inherit
