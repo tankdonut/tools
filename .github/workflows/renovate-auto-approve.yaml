@@ -1,0 +1,30 @@
+name: Renovate Auto-Approve
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, synchronize]
+
+# Prevent concurrent approvals on the same PR.
+concurrency:
+  group: renovate-auto-approve-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  pull-requests: write
+
+jobs:
+  approve:
+    # Only approve non-draft PRs opened by Renovate. Drafts (e.g. major bumps)
+    # remain pending human review until marked ready.
+    if: |
+      github.event.pull_request.draft == false &&
+      (github.actor == 'renovate[bot]' || github.actor == 'renovate-config[bot]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Approve Renovate pull request
+        uses: tankdonut/github-actions/actions/renovate-auto-approve@v1
+        with:
+          github-token: ${{ secrets.AUTO_APPROVE_PAT }}

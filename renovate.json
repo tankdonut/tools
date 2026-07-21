@@ -3,5 +3,24 @@
   "extends": [
     "config:recommended"
   ],
-  "minimumReleaseAge": "7 days"
+  "minimumReleaseAge": "7 days",
+  "platformAutomerge": true,
+  "automergeStrategy": "squash",
+  "packageRules": [
+    {
+      "description": "Automerge non-major updates after passing CI and approval.",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "Automerge development dependencies.",
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true
+    },
+    {
+      "description": "Major updates require manual review.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    }
+  ]
 }
