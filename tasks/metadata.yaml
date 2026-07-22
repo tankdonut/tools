@@ -96,8 +96,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.95.6
-  sha256: 5808b1e034244e5458081c58d013e85255df74e6119dca21c4404275f87213a6
+  version: 1.96.0
+  sha256: 784783ae5ad6be5b5a60ded51c8c814f5370268338b17bfd556a412d384c84c4
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -107,8 +107,8 @@ flux:
 
   repo_url: https://github.com/fluxcd/flux2
   license: APACHE-2.0
-  version: 2.9.1
-  sha256: 6e984c92aa02250ea3f907367dc7829411e31d667b100ce2005cb87d5509e5b3
+  version: 2.9.2
+  sha256: 4092b367fd060097976fb7261601f79420ecf7266328417dfd8dfee27de0e6a3
 golangci-lint:
   description: >
     Fast linters runner for Go
@@ -206,8 +206,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.17.18
-  sha256: e149d32ee5667c0cd5fb84d0bf8393b312e93782eeb4d74d29bbb0392de7133c
+  version: 1.18.2
+  sha256: 97c95e004bb73d2039f957ea33be0635ea4e22b8dceaedf8f0983765950cf1b6
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -338,8 +338,8 @@ terragrunt:
 
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
-  version: 1.1.0
-  sha256: acdf04d4a9d480228b19bcd995df549e6e2ce2d2125fe17d514371598a59f6c1
+  version: 1.1.1
+  sha256: 98b0400ba1ae27120adeeb98ba97e75eba0bab0b4cbd7b8bb148d4ed29e2f823
 tflint:
   description: >
     A Pluggable Terraform Linter
