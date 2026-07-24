@@ -76,6 +76,17 @@ ctlptl:
   license: APACHE-2.0
   version: 0.9.4
   sha256: c63a1ec28e60bc3faf6becb76f53355c5cf5e0143dafdd27ad85db5584fa6b1e
+direnv:
+  description: >
+    A shell extension that unloads and loads environment variables depending on the current directory.
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}.{{os}}-{{arch}}
+
+  repo_url: https://github.com/direnv/direnv
+  license: MIT
+  version: 2.37.1
+  sha256: 1f1b93dd6f38523fde26dfac96151ef9d31a374e3005cd3345fb93555ae0c9b5
 doctl:
   description: >
     A command line tool for DigitalOcean services
