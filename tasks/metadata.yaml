@@ -52,8 +52,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.84.1
-  sha256: 14754490a649a1d4d013558fb810ca896457f3c6534a4d59e70709f73282ad76
+  version: 0.85.0
+  sha256: 52689d6a94bcb4bafbff696b5b2c31586fa94c11491415c926e27f177263f753
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -107,8 +107,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.96.0
-  sha256: 784783ae5ad6be5b5a60ded51c8c814f5370268338b17bfd556a412d384c84c4
+  version: 1.97.0
+  sha256: e039b60994a4a2b4f65f27385757c16e1dea814e98e0d8013433ee58a7c477f3
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -217,8 +217,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.2
-  sha256: 97c95e004bb73d2039f957ea33be0635ea4e22b8dceaedf8f0983765950cf1b6
+  version: 1.18.3
+  sha256: 60f27b2679f00a511b6539f97e02448afaf58d9c66e2448285ea0c517ca84583
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -360,8 +360,8 @@ tflint:
 
   repo_url: https://github.com/terraform-linters/tflint
   license: MPL 2.0
-  version: 0.63.1
-  sha256: 8441a7d97df20431f19c9b9d27ff4c63e308c964e86660bc7cc0cf7bbe0725e8
+  version: 0.64.0
+  sha256: cca9d13e2e1d7a2c627af60ff899a3c9b74212899416aeb96ec764d2ef954537
 tilt:
   description: >
     Define your dev environment as code. For microservice apps on Kubernetes.
