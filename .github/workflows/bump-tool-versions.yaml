@@ -43,4 +43,4 @@ jobs:
           fi
           uv run invoke tools.update $ARGS
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BUMP_PAT }}

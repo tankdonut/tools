@@ -157,6 +157,34 @@ young for the cooldown window are reported as skipped.
 
 A scheduled GitHub Actions workflow runs this weekly (Sundays at 03:00 UTC).
 
+### Workflow Token (`BUMP_PAT`)
+
+The scheduled `bump-tool-versions` workflow authenticates with a dedicated
+personal access token stored as the repository secret `BUMP_PAT`, rather than
+the default `GITHUB_TOKEN`. A separate PAT is required because pull requests
+opened by the default token do not trigger downstream `pull_request`
+workflows, so the bump PR's lint and test checks would never run.
+
+The token backs these operations performed by `tools.update --pr`:
+
+- Push the `automation/update-*` branch to the repository
+- Read upstream GitHub Releases for latest versions and asset digests
+- Create, list, label, and enable auto-merge on the pull request
+
+Create a fine-grained PAT scoped to this repository with these repository
+permissions:
+
+| Permission     | Access          | Used for                                                |
+|----------------|-----------------|---------------------------------------------------------|
+| Contents       | Read and write  | Push the update branch; read release versions and digests |
+| Pull requests  | Read and write  | Create the PR, list existing PRs, enable auto-merge     |
+| Issues         | Read and write  | Add the `dependencies` label to the PR                  |
+| Metadata       | Read            | Required baseline (auto-granted)                        |
+
+Store the token under **Settings → Secrets and variables → Actions** as
+`BUMP_PAT`. A classic PAT with the `repo` scope also works but grants broader
+access than necessary; prefer the fine-grained token above.
+
 ## SHA256 Integrity Verification
 
 When a `sha256` field is present in a tool's metadata, the install task
