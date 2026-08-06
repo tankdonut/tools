@@ -52,8 +52,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.85.0
-  sha256: 52689d6a94bcb4bafbff696b5b2c31586fa94c11491415c926e27f177263f753
+  version: 0.87.0
+  sha256: d033c79744c0f804b6e645c71962dc79f91dbf0ea86b64c1f5c99757faf9f63d
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -96,8 +96,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.163.0
-  sha256: 04413587db80236f80b02b586db094ffa94096891b14c2b4883b623ff3d59b48
+  version: 1.164.0
+  sha256: b3308b6af1cab0077d349204d1f2f5e6f7ccef97691be336634f4192534824b7
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -118,8 +118,8 @@ flux:
 
   repo_url: https://github.com/fluxcd/flux2
   license: APACHE-2.0
-  version: 2.9.2
-  sha256: 4092b367fd060097976fb7261601f79420ecf7266328417dfd8dfee27de0e6a3
+  version: 2.9.3
+  sha256: eae4e8608c0ade2bf4e8dec1669dbb6b0c28b5822b252d97feccfb4fb1181fd2
 golangci-lint:
   description: >
     Fast linters runner for Go
@@ -217,8 +217,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.3
-  sha256: 60f27b2679f00a511b6539f97e02448afaf58d9c66e2448285ea0c517ca84583
+  version: 1.18.5
+  sha256: cd4a2557a3d6550f27cb5c0257ebe8d73388bb34beda8b6121e6428a74c1eae2
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -228,8 +228,8 @@ packer:
 
   repo_url: https://github.com/hashicorp/packer
   license: MPL-2.0
-  version: 1.15.4
-  sha256: 15f97a6a99645c7d5308c609973b5280837b38e112beac413ccbce80da927cf1
+  version: 1.16.0
+  sha256: 5edcd14ab59b535040c512dbecd6ec9ef976a000b073c19d93e4c431c948581e
 rtk:
   description: >
     High-performance CLI proxy that reduces LLM token consumption by 60-90% on common dev commands
@@ -272,8 +272,8 @@ skaffold:
 
   repo_url: https://github.com/GoogleContainerTools/skaffold
   license: APACHE-2.0
-  version: 2.23.0
-  sha256: c44fb83ec88a9ed2945f3326a6d6b78bb957354535f0efcf653413bcd0e9510d
+  version: 2.24.0
+  sha256: 702344081860a587c57937cd55dfa2e70f124c05d6fb845319832ee23fd144a8
 solc:
   description: >
     Solidity, the Smart Contract Programming Language
