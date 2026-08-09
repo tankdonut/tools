@@ -9,8 +9,8 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.4.5
-  sha256: 23303f05a58c1e041324d5645b0f9d6ea338b16bbf32f4a24508f388fcf9f9c0
+  version: 3.4.6
+  sha256: af05f97444a140591a12c136f2be6ffafd95aed03b34a500957ff8aedb998181
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -30,8 +30,8 @@ bd:
 
   repo_url: https://github.com/steveyegge/beads
   license: MIT
-  version: 1.1.0
-  sha256: b0f3dd607c3fb989ee08d0a6854fba80d0402971eb108f9af6170bc14d491a34
+  version: 1.1.2
+  sha256: a72d71ed374955dc9f83a0f90b54bd7b6a0016709dd1676ae2e368651ed401c2
 cr:
   description: >
     CLI tool for linting and testing Helm charts
@@ -52,8 +52,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.87.0
-  sha256: d033c79744c0f804b6e645c71962dc79f91dbf0ea86b64c1f5c99757faf9f63d
+  version: 0.88.0
+  sha256: 4bc327de723782d7eeb31143db186959cc24cfc988a1a57a52520699d3143568
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -96,8 +96,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.164.0
-  sha256: b3308b6af1cab0077d349204d1f2f5e6f7ccef97691be336634f4192534824b7
+  version: 1.166.0
+  sha256: 1596424b64091a7939bde561daf2402ca8a141966429928e688d20d17091ec89
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -217,8 +217,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.5
-  sha256: cd4a2557a3d6550f27cb5c0257ebe8d73388bb34beda8b6121e6428a74c1eae2
+  version: 1.18.11
+  sha256: a4dffcc00a5a93256c6bd06aa0c984320528f564db52a1f4becd5c7de9fb59a1
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -239,8 +239,8 @@ rtk:
 
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
-  version: 0.43.0
-  sha256: ff8a1e7766496e175291a85aeca1dc97c9ff6df33e51e5893d1fbc78fea2a609
+  version: 0.44.2
+  sha256: d94cc2a3e57fa534892b5235a726e7eeb7523f205a5f8f48f853bfcae7be7e33
 shellcheck:
   description: >
     ShellCheck, a static analysis tool for shell scripts
@@ -349,8 +349,8 @@ terragrunt:
 
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
-  version: 1.1.1
-  sha256: 98b0400ba1ae27120adeeb98ba97e75eba0bab0b4cbd7b8bb148d4ed29e2f823
+  version: 1.1.2
+  sha256: 534070d5b261a0e65b3f490479f602a8f80a0ae115e399a3786802cce658aeaa
 tflint:
   description: >
     A Pluggable Terraform Linter
@@ -371,5 +371,5 @@ tilt:
 
   repo_url: https://github.com/tilt-dev/tilt
   license: APACHE-2.0
-  version: 0.37.5
-  sha256: 9efb56969c48ddea4adfb56a604b9ca5ed254924ddf140fc3e068a305cacf558
+  version: 0.37.6
+  sha256: e9672b8a18d43501f35dcfe98465969a7db0e436b36cf0c50c7e6f8d40de5fe6
