@@ -9,8 +9,8 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.4.6
-  sha256: af05f97444a140591a12c136f2be6ffafd95aed03b34a500957ff8aedb998181
+  version: 3.5.0
+  sha256: 82f2ffe3f3df32baed1229963f0866e9a8a3c74e136e9e5f36646d9004332cc5
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -162,8 +162,8 @@ k3s:
 
   repo_url: https://github.com/k3s-io/k3s
   license: APACHE-2.0
-  version: 1.36.2+k3s1
-  sha256: 65a55ec56c24eab44383086166ec620a491952b7e23941a49ddca6e8a4c4b4de
+  version: 1.36.3+k3s1
+  sha256: 2f98a9f8fe5782479ee2d54e70a1b10a7f6fd4cae8d38ed3098452dc6eed76b5
 k9s:
   description: >
     🐶 Kubernetes CLI To Manage Your Clusters In Style!
@@ -217,8 +217,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.11
-  sha256: a4dffcc00a5a93256c6bd06aa0c984320528f564db52a1f4becd5c7de9fb59a1
+  version: 1.18.14
+  sha256: f23980ba2aebfbfa53948e55e213d3f2a53740fd7326553828e89ad27e970572
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
