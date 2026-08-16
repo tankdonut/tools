@@ -52,8 +52,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.88.0
-  sha256: 4bc327de723782d7eeb31143db186959cc24cfc988a1a57a52520699d3143568
+  version: 0.88.1
+  sha256: 83374b4fa6c6e1f98f04ac62e11e5c698e05a2da85a793d28c1064e2697dedf4
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -118,8 +118,8 @@ flux:
 
   repo_url: https://github.com/fluxcd/flux2
   license: APACHE-2.0
-  version: 2.9.3
-  sha256: eae4e8608c0ade2bf4e8dec1669dbb6b0c28b5822b252d97feccfb4fb1181fd2
+  version: 2.9.4
+  sha256: c2c397a52930f52d2005c01d276116b059d062de379386d58e98115380a766a2
 golangci-lint:
   description: >
     Fast linters runner for Go
@@ -217,8 +217,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.14
-  sha256: f23980ba2aebfbfa53948e55e213d3f2a53740fd7326553828e89ad27e970572
+  version: 1.18.15
+  sha256: d842e0e8c622c672a481b7dc6f0329009b64db96b2ba6041e56f4f93f0293b1c
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -239,8 +239,8 @@ rtk:
 
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
-  version: 0.44.2
-  sha256: d94cc2a3e57fa534892b5235a726e7eeb7523f205a5f8f48f853bfcae7be7e33
+  version: 0.45.0
+  sha256: c4c036fbf181fc55ef329786c8c17e0d427972b053b825944d968a6aafef1ba4
 shellcheck:
   description: >
     ShellCheck, a static analysis tool for shell scripts
