@@ -52,8 +52,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.89.0
-  sha256: d13c3ed810bb2ad4908a28b9f51a0ded0a0a86f124d9fb42a12ccf7fe9f26673
+  version: 0.90.0
+  sha256: 4eebb9ce1a3655560bae03c64bebcc546f6b24ba9f9ebd1e8ea844b8c3b37ea0
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -96,8 +96,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.166.0
-  sha256: 1596424b64091a7939bde561daf2402ca8a141966429928e688d20d17091ec89
+  version: 1.167.0
+  sha256: 8d7b39ad749698693458aa701c0c8d522035f923455a9bf0ee03a0b01601e51c
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -107,8 +107,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.97.0
-  sha256: e039b60994a4a2b4f65f27385757c16e1dea814e98e0d8013433ee58a7c477f3
+  version: 1.98.0
+  sha256: 04bb84572a7ef1e5cb886262758d5f6264b5f7f7ba5244c011971f2fc5238ced
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -129,8 +129,8 @@ golangci-lint:
 
   repo_url: https://github.com/golangci/golangci-lint
   license: GPL-3.0
-  version: 2.12.2
-  sha256: 8df580d2670fed8fa984aac0507099af8df275e665215f5c7a2ae3943893a553
+  version: 2.13.1
+  sha256: b17bfbc9d4aaa48be7f4f1ce3240bc3d8200c870c072bacf15c26219e2cfb9cc
 helm-docs:
   description: >
     A tool for automatically generating markdown documentation for helm charts
@@ -217,8 +217,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.18
-  sha256: 0cddc222418b8553669905a8980c0cda7088f00da24d83d6ac76b01c9fdb2aaf
+  version: 1.18.19
+  sha256: 7bb35487c55f9957f5d91ae60be6fa49fc8f74629c210c1719ed75fdbf7e2bd9
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -316,8 +316,8 @@ task:
 
   repo_url: https://github.com/go-task/task
   license: MIT
-  version: 3.52.0
-  sha256: 02c679ffae53dca791804847d78b31731615894e292948397c971c87ac9e95bd
+  version: 3.53.1
+  sha256: a54a408f6861ff921f6e87774180db31bacd8c1e7c944ca696db9fea49a82fc7
 terraform:
   description: >
     Terraform is a tool for building, changing, and combining infrastructure safely and efficiently.
@@ -327,8 +327,8 @@ terraform:
 
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
-  version: 1.15.8
-  sha256: d25ce7b6902013ad905db3d2eab0be4cd905887fe88b81a6171b8d5503c31f3d
+  version: 1.15.9
+  sha256: 76edd0b22d2f27d3d2e097cd793209646f719cf60f02ff3af626b07361137da1
 terraform-docs:
   description: >
     Generate docs from terraform modules
