@@ -1,5 +1,16 @@
 # yaml-language-server: $schema=metadata.schema.json
 ---
+agentctl:
+  description: >
+    Operator CLI for scaffolding and managing standard agent projects
+
+  download_url: >
+    {{repo_url}}/releases/download/{{version}}/{{name}}-{{os}}-{{arch}}
+
+  repo_url: https://github.com/tankdonut/agent-base
+  license: MIT
+  version: 2026.08.29.2
+  sha256: fc1f526ca19c529cec1418c3970fc4a3de880ff608ed28ed68f2e24352b26e15
 argocd:
   description: >
     Declarative Continuous Deployment for Kubernetes
