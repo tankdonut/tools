@@ -67,8 +67,12 @@ def install_single_package(
 
     check_required_tools(download_url, package_name=name)
 
-    if force and (install_path / name).exists():
-        shutil.rmtree(install_path / name)
+    target = install_path / name
+    if force and target.exists():
+        if target.is_dir():
+            shutil.rmtree(target)
+        else:
+            target.unlink()
 
     if (install_path / name).exists():
         console.print(f"  [yellow]SKIP[/yellow] {name}: already installed at {install_path}")
