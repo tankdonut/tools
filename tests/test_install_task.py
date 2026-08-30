@@ -133,6 +133,40 @@ class TestInstallSinglePackage:
             _, kwargs = mock_dl_class.call_args
             assert kwargs["verbose"] is True
 
+    def test_force_reinstall_removes_existing_file_target(self, tmp_path: Path) -> None:
+        """force=True over an installed binary (a plain file) must unlink it, not rmtree."""
+        from tasks.tools._install import install_single_package
+
+        (tmp_path / "mytool").write_text("old binary")
+
+        with (
+            patch("tasks.tools._install.metadata_cache") as mock_cache,
+            patch("tasks.tools._install.PackageDownloader") as mock_dl_class,
+            patch("tasks.tools._install.check_required_tools"),
+        ):
+            mock_cache.get.return_value = TOOL_METADATA
+            install_single_package(Mock(), "mytool", tmp_path, force=True)
+
+            mock_dl_class.return_value.download.assert_called_once()
+
+    def test_force_reinstall_removes_existing_directory_target(self, tmp_path: Path) -> None:
+        """force=True over an installed tool directory must remove the directory tree."""
+        from tasks.tools._install import install_single_package
+
+        stale_dir = tmp_path / "mytool"
+        stale_dir.mkdir()
+        (stale_dir / "nested").write_text("stale")
+
+        with (
+            patch("tasks.tools._install.metadata_cache") as mock_cache,
+            patch("tasks.tools._install.PackageDownloader") as mock_dl_class,
+            patch("tasks.tools._install.check_required_tools"),
+        ):
+            mock_cache.get.return_value = TOOL_METADATA
+            install_single_package(Mock(), "mytool", tmp_path, force=True)
+
+            mock_dl_class.return_value.download.assert_called_once()
+
     def test_force_uses_shutil_rmtree(self, tmp_path: Path) -> None:
         """--force removes an existing install via shutil.rmtree, not a shell rm."""
         from tasks.tools._install import install_single_package
