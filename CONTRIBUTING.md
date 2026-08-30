@@ -205,10 +205,14 @@ Releases are fully automated and keyed off tool version changes in
 
 Pushes without version changes are skipped, already-cut tags are not
 re-pushed, and every publishing step is idempotent, so a failed release can
-be retried by re-running the workflow (`workflow_dispatch`). The release
-workflow runs entirely on the default `GITHUB_TOKEN`; the only PAT in the
-chain is `BUMP_PAT` (documented above), which authors the bump PRs whose
-merges start the process.
+be retried by re-running the workflow (`workflow_dispatch`) — `cut-tag`
+detects the incomplete release and the `release` job finishes it.
+
+The workflow runs on the default `GITHUB_TOKEN` except for one push: the
+`chore: release` commit to protected `main`, which is authenticated with
+`BUMP_PAT` (documented above) because `GITHUB_TOKEN` cannot push to the
+protected branch. `BUMP_PAT` also authors the bump PRs whose merges start
+the process.
 
 ## SHA256 Integrity Verification
 
