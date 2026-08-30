@@ -210,6 +210,16 @@ def pick_latest_tag(tags: list[str]) -> str | None:
     return max(calver, key=lambda tag: [int(part) for part in tag.split(".")])
 
 
+def _pre_release_base() -> str:
+    """Parent of the most recent tasks/metadata.yaml commit: the state
+    immediately before the current bump. Used when no earlier release
+    tag exists to diff against."""
+    last_meta = _git_output("log", "-1", "--format=%H", "--", "tasks/metadata.yaml")
+    if not last_meta:
+        raise RuntimeError("No commits found for tasks/metadata.yaml")
+    return _git_output("rev-parse", f"{last_meta}^")
+
+
 def resolve_diff_base() -> str:
     """Diff base for unreleased version changes: the latest release tag if
     one exists, otherwise the parent of the most recent tasks/metadata.yaml
@@ -218,10 +228,7 @@ def resolve_diff_base() -> str:
     tag = pick_latest_tag(_git_output("tag", "-l", "20*").split())
     if tag:
         return tag
-    last_meta = _git_output("log", "-1", "--format=%H", "--", "tasks/metadata.yaml")
-    if not last_meta:
-        raise RuntimeError("No commits found for tasks/metadata.yaml")
-    return _git_output("rev-parse", f"{last_meta}^")
+    return _pre_release_base()
 
 
 def changes_for_range(diff_range: str) -> list[VersionChange]:
@@ -245,8 +252,16 @@ def _changelog_has_entry(tag: str) -> bool:
 
 
 def _release_diff_range(tag: str) -> str:
+    """Diff range covering the changes released by `tag`.
+
+    With a previous release tag, changes are prev..tag. For the first
+    release, the base is the pre-bump state — never the latest tag, which
+    is this release itself and would diff to nothing.
+    """
     prev = os.getenv("PREV_TAG", "")
-    return f"{prev}..{tag}" if prev else f"{resolve_diff_base()}..HEAD"
+    if prev:
+        return f"{prev}..{tag}"
+    return f"{_pre_release_base()}..{tag}"
 
 
 @task

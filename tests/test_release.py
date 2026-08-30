@@ -505,6 +505,25 @@ class TestResolveDiffBase:
             release_mod.resolve_diff_base()
 
 
+class TestReleaseDiffRange:
+    """Test _release_diff_range helper."""
+
+    def test_uses_prev_tag_when_present(self, monkeypatch):
+        """With PREV_TAG set, the range spans prev..tag."""
+        monkeypatch.setenv("PREV_TAG", "2026.07.0")
+        assert release_mod._release_diff_range("2026.08.0") == "2026.07.0..2026.08.0"
+
+    def test_first_release_uses_pre_bump_base(self, monkeypatch):
+        """Without PREV_TAG, the base is the parent of the last metadata commit."""
+        monkeypatch.delenv("PREV_TAG", raising=False)
+        responses = {
+            ("log", "-1", "--format=%H", "--", "tasks/metadata.yaml"): "bumpsha",
+            ("rev-parse", "bumpsha^"): "parentsha",
+        }
+        monkeypatch.setattr(release_mod, "_git_output", lambda *args: responses[args])
+        assert release_mod._release_diff_range("2026.08.0") == "parentsha..2026.08.0"
+
+
 class TestAppendGithubOutput:
     """Test _append_github_output helper."""
 
