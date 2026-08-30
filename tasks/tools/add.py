@@ -1,6 +1,6 @@
 from invoke.tasks import task
 
-from tasks.lib import extract_semver_from_tag
+from tasks.lib import extract_version_from_tag
 from tasks.tools._github import get_latest_github_release_version, get_owner_and_repo
 from tasks.tools._metadata import metadata_cache, write_metadata
 
@@ -32,9 +32,9 @@ def add(
     if not latest_tag:
         raise ValueError("Unable to determine latest release version")
 
-    version = extract_semver_from_tag(latest_tag)
+    version = extract_version_from_tag(latest_tag)
     if not version:
-        raise ValueError(f"Unable to extract semver from tag '{latest_tag}'")
+        raise ValueError(f"Unable to extract version from tag '{latest_tag}'")
 
     metadata[package_name] = {
         "description": description,

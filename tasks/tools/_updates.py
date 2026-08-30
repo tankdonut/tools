@@ -12,10 +12,10 @@ from rich.progress import (
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
-import semver
 
 from tasks.lib import (
-    extract_semver_from_tag,
+    compare_versions,
+    extract_version_from_tag,
     fetch_asset_digest,
     render_download_url_for_linux_amd64,
 )
@@ -65,23 +65,15 @@ def _try_previous_release(
     if not releases:
         return None, []
 
-    try:
-        current_semver = semver.Version.parse(current_version)
-    except ValueError:
-        return None, []
-
     external_hosted = name in HASHICORP_TOOLS
     for tag, published_at, asset_count in releases:
         if asset_count == 0 and not external_hosted:
             continue
-        release_version = extract_semver_from_tag(tag)
+        release_version = extract_version_from_tag(tag)
         if not release_version:
             continue
-        try:
-            release_semver = semver.Version.parse(release_version)
-        except ValueError:
-            continue
-        if release_semver <= current_semver:
+        comparison = compare_versions(current_version, release_version)
+        if comparison is None or comparison >= 0:
             continue
         if not published_at:
             continue
@@ -133,14 +125,11 @@ def check_package_update(
         fallback, fallback_checked = _try_previous_release(
             name, owner, repo, current_version, cooldown=cooldown
         )
-        skipped_version = extract_semver_from_tag(latest_tag)
+        skipped_version = extract_version_from_tag(latest_tag)
         if not skipped_version:
             return None
-        try:
-            if semver.Version.parse(skipped_version) == semver.Version.parse(current_version):
-                return None
-        except ValueError:
-            pass
+        if compare_versions(current_version, skipped_version) == 0:
+            return None
         latest_entry = {
             "version": skipped_version,
             "age_days": 0,
@@ -162,16 +151,11 @@ def check_package_update(
             published_date = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
             age_days = (datetime.now(UTC) - published_date).days
             if age_days < cooldown:
-                skipped_version = extract_semver_from_tag(latest_tag)
+                skipped_version = extract_version_from_tag(latest_tag)
                 if not skipped_version:
                     return None
-                try:
-                    skipped_sv = semver.Version.parse(skipped_version)
-                    current_sv = semver.Version.parse(current_version)
-                    if skipped_sv == current_sv:
-                        return None
-                except ValueError:
-                    pass
+                if compare_versions(current_version, skipped_version) == 0:
+                    return None
                 fallback, fallback_checked = _try_previous_release(
                     name, owner, repo, current_version, cooldown=cooldown
                 )
@@ -193,18 +177,15 @@ def check_package_update(
                 }
         except (ValueError, TypeError):
             pass
-    latest_version = extract_semver_from_tag(latest_tag)
+    latest_version = extract_version_from_tag(latest_tag)
     if not latest_version:
         return None
-    try:
-        if semver.Version.parse(current_version) < semver.Version.parse(latest_version):
-            return {
-                "package": name,
-                "from_version": current_version,
-                "to_version": latest_version,
-            }
-    except ValueError:
-        return None
+    if compare_versions(current_version, latest_version) == -1:
+        return {
+            "package": name,
+            "from_version": current_version,
+            "to_version": latest_version,
+        }
     return None
 
 
