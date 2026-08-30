@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 import datetime
+import os
 from pathlib import Path
 import re
+import subprocess
 
 from invoke import Context, task
 
@@ -180,6 +182,114 @@ def bump_pyproject_version(path: Path, version: str) -> bool:
     return True
 
 
+def _git_output(*args: str) -> str:
+    result = subprocess.run(["git", *args], capture_output=True, text=True, check=True)
+    return result.stdout.strip()
+
+
+def _require_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Required environment variable is not set: {name}")
+    return value
+
+
+def _append_github_output(name: str, value: str) -> None:
+    output_file = os.getenv("GITHUB_OUTPUT")
+    if not output_file:
+        return
+    with Path(output_file).open("a") as f:
+        f.write(f"{name}={value}\n")
+
+
+def pick_latest_tag(tags: list[str]) -> str | None:
+    """Return the highest CalVer (YYYY.MM.N) tag, ignoring non-CalVer tags."""
+    calver = [t for t in tags if re.fullmatch(r"\d{4}\.\d{2}\.\d+", t)]
+    if not calver:
+        return None
+    return max(calver, key=lambda tag: [int(part) for part in tag.split(".")])
+
+
+def resolve_diff_base() -> str:
+    """Diff base for unreleased version changes: the latest release tag if
+    one exists, otherwise the parent of the most recent tasks/metadata.yaml
+    change. Keeps a bump detectable even when later commits only touch the
+    workflow or docs, so a missed release self-heals on the next run."""
+    tag = pick_latest_tag(_git_output("tag", "-l", "20*").split())
+    if tag:
+        return tag
+    last_meta = _git_output("log", "-1", "--format=%H", "--", "tasks/metadata.yaml")
+    if not last_meta:
+        raise RuntimeError("No commits found for tasks/metadata.yaml")
+    return _git_output("rev-parse", f"{last_meta}^")
+
+
+def changes_for_range(diff_range: str) -> list[VersionChange]:
+    diff = _git_output("diff", diff_range, "--", "tasks/metadata.yaml")
+    return parse_metadata_diff(diff)
+
+
+def _release_exists(tag: str) -> bool:
+    try:
+        result = subprocess.run(["gh", "release", "view", tag], capture_output=True, text=True)
+    except OSError:
+        return False
+    return result.returncode == 0
+
+
+def _changelog_has_entry(tag: str) -> bool:
+    changelog = Path("CHANGELOG.md")
+    if not changelog.exists():
+        return False
+    return any(line.startswith(f"## {tag} ") for line in changelog.read_text().splitlines())
+
+
+def _release_diff_range(tag: str) -> str:
+    prev = os.getenv("PREV_TAG", "")
+    return f"{prev}..{tag}" if prev else f"{resolve_diff_base()}..HEAD"
+
+
 @task
-def release(ctx: Context) -> None:
-    """Run the release automation process."""
+def detect(c: Context) -> None:
+    """Report unreleased version changes and the next CalVer tag via GITHUB_OUTPUT."""
+    diff = _git_output("diff", resolve_diff_base(), "HEAD", "--", "tasks/metadata.yaml")
+    if not has_version_changes(diff):
+        latest = pick_latest_tag(_git_output("tag", "-l", "20*").split())
+        if latest and not (_release_exists(latest) and _changelog_has_entry(latest)):
+            print(f"Release artifacts for {latest} incomplete; recovering.")
+            _append_github_output("has_changes", "true")
+            _append_github_output("calver_tag", latest)
+            _append_github_output("skip", "true")
+            return
+        print("No tool version changes since the last release; skipping.")
+        _append_github_output("has_changes", "false")
+        return
+
+    existing_tags = _git_output("tag", "-l").split()
+    tag = calculate_calver_tag(datetime.date.today(), existing_tags)
+    skip = "true" if tag in existing_tags else "false"
+    print(f"has_changes=true calver_tag={tag} skip={skip}")
+    _append_github_output("has_changes", "true")
+    _append_github_output("calver_tag", tag)
+    _append_github_output("skip", skip)
+
+
+@task
+def notes(c: Context) -> None:
+    """Write release-notes.md from RELEASE_TAG, PREV_TAG, and IMAGE_DIGEST."""
+    tag = _require_env("RELEASE_TAG")
+    changes = changes_for_range(_release_diff_range(tag))
+    image = f"ghcr.io/{_require_env('GITHUB_REPOSITORY')}"
+    digest = os.getenv("IMAGE_DIGEST") or None
+    content = build_release_notes(tag, image, digest, changes)
+    Path("release-notes.md").write_text(content + "\n")
+    print(content)
+
+
+@task
+def changelog(c: Context) -> None:
+    """Prepend the RELEASE_TAG entry to CHANGELOG.md and bump pyproject.toml."""
+    tag = _require_env("RELEASE_TAG")
+    changes = changes_for_range(_release_diff_range(tag))
+    update_changelog_file(Path("CHANGELOG.md"), tag, datetime.date.today().isoformat(), changes)
+    bump_pyproject_version(Path("pyproject.toml"), tag)
