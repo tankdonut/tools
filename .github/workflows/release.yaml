@@ -41,38 +41,9 @@ jobs:
 
       - name: Detect version changes and calculate CalVer tag
         id: detect
-        run: |
-          uv run python -c "
-          import datetime
-          import subprocess
-
-          from tasks.release import calculate_calver_tag, has_version_changes
-
-          diff = subprocess.run(
-              ['git', 'diff', 'HEAD~1', 'HEAD', '--', 'tasks/metadata.yaml'],
-              capture_output=True, text=True,
-          ).stdout
-
-          if not has_version_changes(diff):
-              print('No tool version changes in this push; skipping release.')
-              with open('$GITHUB_OUTPUT', 'a') as f:
-                  f.write('has_changes=false\n')
-              raise SystemExit(0)
-
-          existing_tags = subprocess.run(
-              ['git', 'tag', '-l'],
-              capture_output=True, text=True,
-          ).stdout.split()
-
-          tag = calculate_calver_tag(datetime.date.today(), existing_tags)
-          skip = 'true' if tag in existing_tags else 'false'
-
-          print(f'has_changes=true calver_tag={tag} skip={skip}')
-          with open('$GITHUB_OUTPUT', 'a') as f:
-              f.write('has_changes=true\n')
-              f.write(f'calver_tag={tag}\n')
-              f.write(f'skip={skip}\n')
-          "
+        # Diff base resolution (latest release tag, else parent of the
+        # most recent metadata.yaml change) lives in tasks/release.py.
+        run: uv run inv release.detect
 
       - name: Report idempotent skip
         if: >-
@@ -205,31 +176,7 @@ jobs:
         env:
           PREV_TAG: ${{ steps.prev.outputs.prev_tag }}
           IMAGE_DIGEST: ${{ steps.image_digest.outputs.digest }}
-        run: |
-          uv run python -c "
-          import os
-          import subprocess
-
-          from tasks.release import build_release_notes, parse_metadata_diff
-
-          tag = os.environ['RELEASE_TAG']
-          prev = os.environ.get('PREV_TAG', '')
-          image = f\"ghcr.io/{os.environ['GITHUB_REPOSITORY']}\"
-
-          diff_range = f'{prev}..{tag}' if prev else 'HEAD~1..HEAD'
-          diff = subprocess.run(
-              ['git', 'diff', diff_range, '--', 'tasks/metadata.yaml'],
-              capture_output=True, text=True,
-          ).stdout
-          changes = parse_metadata_diff(diff)
-
-          digest = os.environ.get('IMAGE_DIGEST') or None
-
-          notes = build_release_notes(tag, image, digest, changes)
-          with open('release-notes.md', 'w') as f:
-              f.write(notes + '\n')
-          print(notes)
-          "
+        run: uv run inv release.notes
 
       - name: Create GitHub Release
         env:
@@ -256,27 +203,7 @@ jobs:
             echo "Changelog entry for ${TAG} already present; skipping."
             exit 0
           fi
-          uv run python -c "
-          import datetime
-          import os
-          import subprocess
-          from pathlib import Path
-
-          from tasks.release import bump_pyproject_version, parse_metadata_diff, update_changelog_file
-
-          tag = os.environ['RELEASE_TAG']
-          prev = os.environ.get('PREV_TAG', '')
-
-          diff_range = f'{prev}..{tag}' if prev else 'HEAD~1..HEAD'
-          diff = subprocess.run(
-              ['git', 'diff', diff_range, '--', 'tasks/metadata.yaml'],
-              capture_output=True, text=True,
-          ).stdout
-          changes = parse_metadata_diff(diff)
-
-          update_changelog_file(Path('CHANGELOG.md'), tag, datetime.date.today().isoformat(), changes)
-          bump_pyproject_version(Path('pyproject.toml'), tag)
-          "
+          uv run inv release.changelog
           git add CHANGELOG.md pyproject.toml
           if git diff --cached --quiet; then
             echo "Nothing to commit; changelog and version already up to date."

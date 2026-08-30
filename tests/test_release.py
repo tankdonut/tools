@@ -1,5 +1,8 @@
 import datetime
 
+from invoke import Context
+import pytest
+from tasks import release as release_mod
 from tasks.release import (
     VersionChange,
     build_release_notes,
@@ -453,3 +456,183 @@ class TestBumpPyprojectVersion:
         assert 'requires-python = ">=3.13,<4.0"' in content
         assert "[tool.ruff]" in content
         assert "line-length = 100" in content
+
+
+class TestPickLatestTag:
+    """Test pick_latest_tag function."""
+
+    def test_numeric_ordering(self):
+        """Numeric component comparison, not lexicographic."""
+        assert release_mod.pick_latest_tag(["2026.08.0", "2026.08.2", "2026.08.10"]) == (
+            "2026.08.10"
+        )
+
+    def test_ignores_non_calver_tags(self):
+        """Only YYYY.MM.N shaped tags are considered."""
+        assert release_mod.pick_latest_tag(["v1.2.3", "latest", "2026.08.0"]) == "2026.08.0"
+
+    def test_no_calver_tags_returns_none(self):
+        """Returns None when no CalVer tags exist."""
+        assert release_mod.pick_latest_tag(["v1.0.0", "20-dev"]) is None
+
+
+class TestResolveDiffBase:
+    """Test resolve_diff_base function."""
+
+    def test_prefers_latest_release_tag(self, monkeypatch):
+        """With release tags present, the highest CalVer tag is the base."""
+        monkeypatch.setattr(release_mod, "_git_output", lambda *args: "2026.07.3\n2026.08.0")
+        assert release_mod.resolve_diff_base() == "2026.08.0"
+
+    def test_falls_back_to_metadata_parent(self, monkeypatch):
+        """Without release tags, base is the parent of the last metadata commit."""
+        responses = {
+            ("tag", "-l", "20*"): "",
+            ("log", "-1", "--format=%H", "--", "tasks/metadata.yaml"): "bumpsha",
+            ("rev-parse", "bumpsha^"): "parentsha",
+        }
+        monkeypatch.setattr(release_mod, "_git_output", lambda *args: responses[args])
+        assert release_mod.resolve_diff_base() == "parentsha"
+
+    def test_raises_without_metadata_history(self, monkeypatch):
+        """Fails loudly when metadata.yaml has no commit history."""
+        responses = {
+            ("tag", "-l", "20*"): "",
+            ("log", "-1", "--format=%H", "--", "tasks/metadata.yaml"): "",
+        }
+        monkeypatch.setattr(release_mod, "_git_output", lambda *args: responses[args])
+        with pytest.raises(RuntimeError, match="No commits found"):
+            release_mod.resolve_diff_base()
+
+
+class TestAppendGithubOutput:
+    """Test _append_github_output helper."""
+
+    def test_appends_pairs(self, tmp_path, monkeypatch):
+        """Writes name=value lines to $GITHUB_OUTPUT."""
+        out = tmp_path / "outputs.txt"
+        monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+        release_mod._append_github_output("has_changes", "true")
+        release_mod._append_github_output("calver_tag", "2026.08.0")
+        assert out.read_text() == "has_changes=true\ncalver_tag=2026.08.0\n"
+
+    def test_noop_without_env(self, monkeypatch):
+        """Does nothing when GITHUB_OUTPUT is unset (local runs)."""
+        monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+        release_mod._append_github_output("has_changes", "false")
+
+
+class TestDetectTask:
+    """Test the release.detect invoke task."""
+
+    DIFF = "-  version: '0.90.0'\n+  version: '0.91.0'"
+
+    def _run(self, monkeypatch, tmp_path, diff, tags):
+        out = tmp_path / "outputs.txt"
+        monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+        responses = {
+            ("tag", "-l", "20*"): "\n".join(tags),
+            ("log", "-1", "--format=%H", "--", "tasks/metadata.yaml"): "bumpsha",
+            ("rev-parse", "bumpsha^"): "parentsha",
+            ("tag", "-l"): "\n".join(tags),
+        }
+
+        def fake_git(*args):
+            if args[0] == "diff":
+                return diff
+            return responses[args]
+
+        monkeypatch.setattr(release_mod, "_git_output", fake_git)
+        monkeypatch.chdir(tmp_path)
+        release_mod.detect(Context())
+        return out.read_text()
+
+    def test_no_changes_skips(self, monkeypatch, tmp_path):
+        """No version changes and no recoverable tag writes has_changes=false."""
+        monkeypatch.setattr(release_mod, "_release_exists", lambda tag: True)
+        (tmp_path / "CHANGELOG.md").write_text("## 2026.08.0 (2026-08-30)\n")
+        assert self._run(monkeypatch, tmp_path, "", ["2026.08.0"]) == "has_changes=false\n"
+
+    def test_changes_cut_new_tag(self, monkeypatch, tmp_path):
+        """Version changes produce today's CalVer tag with skip=false."""
+        today = datetime.date.today()
+        expected = f"{today.year}.{today.month:02d}.0"
+        output = self._run(monkeypatch, tmp_path, self.DIFF, [])
+        assert output == f"has_changes=true\ncalver_tag={expected}\nskip=false\n"
+
+    def test_incomplete_release_recovers(self, monkeypatch, tmp_path):
+        """Tag exists but release is missing: re-enters via skip path."""
+        monkeypatch.setattr(release_mod, "_release_exists", lambda tag: False)
+        output = self._run(monkeypatch, tmp_path, "", ["2026.08.0"])
+        assert output == "has_changes=true\ncalver_tag=2026.08.0\nskip=true\n"
+
+    def test_missing_changelog_recovers(self, monkeypatch, tmp_path):
+        """Release exists but changelog entry missing: skip path recovery."""
+        monkeypatch.setattr(release_mod, "_release_exists", lambda tag: True)
+        output = self._run(monkeypatch, tmp_path, "", ["2026.08.0"])
+        assert output == "has_changes=true\ncalver_tag=2026.08.0\nskip=true\n"
+
+
+class TestNotesTask:
+    """Test the release.notes invoke task."""
+
+    def test_writes_notes_file(self, tmp_path, monkeypatch):
+        """Composes image ref, digest pin, and changelog into release-notes.md."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("RELEASE_TAG", "2026.08.0")
+        monkeypatch.setenv("GITHUB_REPOSITORY", "tankdonut/tools")
+        monkeypatch.setenv("IMAGE_DIGEST", "sha256:abc123")
+        monkeypatch.setenv("PREV_TAG", "2026.07.0")
+
+        captured = {}
+
+        def fake_changes(diff_range):
+            captured["range"] = diff_range
+            return [
+                VersionChange(
+                    name="crush", old_version="0.90.0", new_version="0.91.0", change_type="upgrade"
+                )
+            ]
+
+        monkeypatch.setattr(release_mod, "changes_for_range", fake_changes)
+        release_mod.notes(Context())
+
+        assert captured["range"] == "2026.07.0..2026.08.0"
+        content = (tmp_path / "release-notes.md").read_text()
+        assert "Image: `ghcr.io/tankdonut/tools:2026.08.0`" in content
+        assert "sha256:abc123" in content
+        assert "- crush: 0.90.0 → 0.91.0" in content
+
+    def test_requires_release_tag(self, tmp_path, monkeypatch):
+        """Fails loudly when RELEASE_TAG is unset."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("RELEASE_TAG", raising=False)
+        with pytest.raises(RuntimeError, match="RELEASE_TAG"):
+            release_mod.notes(Context())
+
+
+class TestChangelogTask:
+    """Test the release.changelog invoke task."""
+
+    def test_updates_changelog_and_pyproject(self, tmp_path, monkeypatch):
+        """Prepends the release entry and bumps the project version."""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "pyproject.toml").write_text('[project]\nname = "tools"\nversion = "0.1.0"\n')
+        monkeypatch.setenv("RELEASE_TAG", "2026.08.0")
+        monkeypatch.setattr(release_mod, "_release_diff_range", lambda tag: "basesha..HEAD")
+        changes = [
+            VersionChange(
+                name="opencode",
+                old_version="1.18.19",
+                new_version="1.18.21",
+                change_type="upgrade",
+            )
+        ]
+        monkeypatch.setattr(release_mod, "changes_for_range", lambda diff_range: changes)
+        release_mod.changelog(Context())
+
+        changelog_text = (tmp_path / "CHANGELOG.md").read_text()
+        assert changelog_text.startswith("## 2026.08.0 (")
+        assert "### Upgrades" in changelog_text
+        assert "- opencode: 1.18.19 → 1.18.21" in changelog_text
+        assert 'version = "2026.08.0"' in (tmp_path / "pyproject.toml").read_text()
