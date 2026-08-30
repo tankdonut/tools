@@ -111,16 +111,16 @@ jobs:
           steps.detect.outputs.skip != 'true'
         run: |
           IMAGE="ghcr.io/${{ github.repository }}"
-          DIGEST="${{ github.sha }}"
+          SHA="${{ github.sha }}"
           for i in $(seq 1 30); do
-            if crane digest "${IMAGE}@${DIGEST}" >/dev/null 2>&1; then
-              echo "Image ${IMAGE}@${DIGEST} is available."
+            if crane digest "${IMAGE}:${SHA}" >/dev/null 2>&1; then
+              echo "Image ${IMAGE}:${SHA} is available."
               exit 0
             fi
             echo "Waiting for image... attempt $i/30"
             sleep 30
           done
-          echo "::error::Image ${IMAGE}@${DIGEST} not found after 15 minutes"
+          echo "::error::Image ${IMAGE}:${SHA} not found after 15 minutes"
           exit 1
 
       - name: Configure git
@@ -193,15 +193,18 @@ jobs:
       - name: Tag container image
         # Fail fast if the image is missing rather than publishing a
         # release that references an unavailable image.
+        id: image_digest
         run: |
           IMAGE="ghcr.io/${{ github.repository }}"
-          DIGEST="${{ github.sha }}"
-          crane digest "${IMAGE}@${DIGEST}" >/dev/null
-          crane tag "${IMAGE}@${DIGEST}" "${RELEASE_TAG}"
+          SHA="${{ github.sha }}"
+          DIGEST=$(crane digest "${IMAGE}:${SHA}")
+          crane tag "${IMAGE}:${SHA}" "${RELEASE_TAG}"
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
       - name: Build release notes
         env:
           PREV_TAG: ${{ steps.prev.outputs.prev_tag }}
+          IMAGE_DIGEST: ${{ steps.image_digest.outputs.digest }}
         run: |
           uv run python -c "
           import os
@@ -220,10 +223,7 @@ jobs:
           ).stdout
           changes = parse_metadata_diff(diff)
 
-          digest = subprocess.run(
-              ['crane', 'digest', f'{image}@{os.environ[\"GITHUB_SHA\"]}'],
-              capture_output=True, text=True,
-          ).stdout.strip() or None
+          digest = os.environ.get('IMAGE_DIGEST') or None
 
           notes = build_release_notes(tag, image, digest, changes)
           with open('release-notes.md', 'w') as f:
