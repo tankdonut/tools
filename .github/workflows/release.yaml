@@ -205,8 +205,12 @@ jobs:
         uses: tankdonut/github-actions/actions/git-bot-config@v1
 
       - name: Update CHANGELOG.md and pyproject.toml
+        # The changelog commit goes to protected main; GITHUB_TOKEN cannot
+        # push there (GH006), so authenticate with BUMP_PAT, whose owner
+        # identity bypasses the PR requirement (enforce_admins is off).
         env:
           PREV_TAG: ${{ steps.prev.outputs.prev_tag }}
+          BUMP_PAT: ${{ secrets.BUMP_PAT }}
         run: |
           TAG="${RELEASE_TAG}"
           git checkout -B main origin/main
@@ -221,4 +225,6 @@ jobs:
             exit 0
           fi
           git commit -m "chore: release ${TAG}"
+          git remote set-url origin \
+            "https://x-access-token:${BUMP_PAT}@github.com/${GITHUB_REPOSITORY}.git"
           git push origin main
