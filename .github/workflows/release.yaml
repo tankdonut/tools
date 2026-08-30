@@ -183,7 +183,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
-            echo "Release ${RELEASE_TAG} already exists; skipping creation."
+            echo "Release ${RELEASE_TAG} already exists; refreshing notes."
+            gh release edit "${RELEASE_TAG}" --notes-file release-notes.md
             exit 0
           fi
           gh release create "${RELEASE_TAG}" \
