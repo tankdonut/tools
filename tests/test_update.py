@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-from tasks.lib import extract_semver_from_tag
+from tasks.lib import compare_versions, extract_semver_from_tag, extract_version_from_tag
 from tasks.tools._github import (
     GitHubRateLimitError,
     get_latest_github_release_version,
@@ -1139,6 +1139,59 @@ class TestExtractSemverFromTag:
     )
     def test_extract_semver(self, tag, expected):
         assert extract_semver_from_tag(tag) == expected
+
+
+class TestExtractVersionFromTag:
+    """Test extract_version_from_tag helper (semver + CalVer)."""
+
+    @pytest.mark.parametrize(
+        ("tag", "expected"),
+        [
+            # Semver passes through unchanged
+            ("v1.2.3", "1.2.3"),
+            ("1.2.3-rc1", "1.2.3-rc1"),
+            ("kustomize/v5.3.0", "5.3.0"),
+            # CalVer tags (leading zeros preserved for URL rendering)
+            ("2026.08.29.2", "2026.08.29.2"),
+            ("2026.08.29", "2026.08.29"),
+            ("v2026.08.29", "2026.08.29"),
+            ("2026.8.7", "2026.8.7"),
+            ("release-2026.08.29", "2026.08.29"),
+            # Semver takes precedence when both patterns could match
+            ("1234.5.6", "1234.5.6"),
+            # No version at all
+            ("latest", None),
+            ("", None),
+            ("v1", None),
+            ("1.2", None),
+        ],
+    )
+    def test_extract_version(self, tag, expected):
+        assert extract_version_from_tag(tag) == expected
+
+
+class TestCompareVersions:
+    """Test compare_versions helper (semver + CalVer)."""
+
+    @pytest.mark.parametrize(
+        ("left", "right", "expected"),
+        [
+            # Strict semver semantics
+            ("1.2.3", "1.4.0", -1),
+            ("1.2.3", "1.2.3", 0),
+            ("1.2.3-rc.1", "1.2.3", -1),
+            ("2.0.0", "10.0.0", -1),
+            # CalVer numeric component comparison
+            ("2026.08.29.2", "2026.08.29.10", -1),
+            ("2026.09.01", "2026.08.31", 1),
+            ("2026.08.29", "2026.08.29", 0),
+            ("2027.01.01", "2026.12.31", 1),
+            # Incomparable (semver prerelease vs CalVer)
+            ("1.2.3-rc.1", "2026.08.29", None),
+        ],
+    )
+    def test_compare(self, left, right, expected):
+        assert compare_versions(left, right) == expected
 
 
 class TestLogging:

@@ -27,6 +27,7 @@ from tasks.lib.templates import (
 from tasks.lib.templates import render_template as render_template
 
 _SEMVER_RE = re.compile(r"[vV]?(\d+\.\d+\.\d+(?:-[\w.-]+)?(?:\+[\w.-]+)?)")
+_CALVER_RE = re.compile(r"[vV]?(\d{4}\.\d{1,2}\.\d{1,2}(?:\.\d+)?)")
 
 
 def extract_semver_from_tag(tag: str) -> str | None:
@@ -43,3 +44,58 @@ def extract_semver_from_tag(tag: str) -> str | None:
     except ValueError:
         return None
     return candidate
+
+
+def extract_calver_from_tag(tag: str) -> str | None:
+    """Extract a CalVer (YYYY.MM.DD[.N]) version from a tag, stripping any 'v' prefix."""
+    match = _CALVER_RE.search(tag)
+    if not match:
+        return None
+    return match.group(1)
+
+
+def extract_version_from_tag(tag: str) -> str | None:
+    """Extract a semver or CalVer version string from a tag.
+
+    Semver takes precedence; CalVer (e.g. 2026.08.29.2) is the fallback. The
+    returned string preserves the tag's exact component formatting (including
+    leading zeros) so it can be rendered back into download URLs.
+    """
+    return extract_semver_from_tag(tag) or extract_calver_from_tag(tag)
+
+
+def compare_versions(left: str, right: str) -> int | None:
+    """Compare two version strings (semver or CalVer).
+
+    Returns -1, 0, or 1; None when the two cannot be compared. Strict semver
+    semantics (including prerelease/build precedence) apply when both sides
+    parse as semver; otherwise falls back to numeric comparison of
+    dot-separated components, which handles CalVer's leading zeros
+    (2026.08.10 > 2026.08.09).
+    """
+
+    def numeric_key(version: str) -> tuple[int, ...] | None:
+        parts = version.strip().lstrip("vV").split(".")
+        if not all(part.isdigit() and part for part in parts):
+            return None
+        return tuple(int(part) for part in parts)
+
+    try:
+        left_semver = semver.Version.parse(left)
+        right_semver = semver.Version.parse(right)
+    except ValueError:
+        left_key = numeric_key(left)
+        right_key = numeric_key(right)
+        if left_key is None or right_key is None:
+            return None
+        if left_key < right_key:
+            return -1
+        if left_key > right_key:
+            return 1
+        return 0
+
+    if left_semver < right_semver:
+        return -1
+    if left_semver > right_semver:
+        return 1
+    return 0
