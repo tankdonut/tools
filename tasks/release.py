@@ -151,6 +151,35 @@ def update_changelog_file(
         path.write_text(entry)
 
 
+def build_release_notes(
+    tag: str, image: str, digest: str | None, changes: list[VersionChange]
+) -> str:
+    """Compose GitHub release notes: image pin plus grouped tool changes."""
+    lines = [f"Image: `{image}:{tag}`"]
+    if digest:
+        lines.append("")
+        lines.append(f"Digest `{digest}` — pin: `{image}:{tag}@{digest}`")
+    changelog = generate_changelog(changes)
+    if changelog:
+        lines.append("")
+        lines.append(changelog)
+    return "\n".join(lines)
+
+
+def bump_pyproject_version(path: Path, version: str) -> bool:
+    """Set the first `version = "..."` assignment in pyproject.toml.
+
+    Returns True if the file content changed, False if it already held the
+    given version.
+    """
+    content = path.read_text()
+    updated = re.sub(r'version = ".*"', f'version = "{version}"', content, count=1)
+    if updated == content:
+        return False
+    path.write_text(updated)
+    return True
+
+
 @task
 def release(ctx: Context) -> None:
     """Run the release automation process."""

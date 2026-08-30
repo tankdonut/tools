@@ -2,6 +2,8 @@ import datetime
 
 from tasks.release import (
     VersionChange,
+    build_release_notes,
+    bump_pyproject_version,
     calculate_calver_tag,
     generate_changelog,
     has_version_changes,
@@ -360,3 +362,94 @@ class TestUpdateChangelogFile:
         assert "## 2023.12.0 (2023-12-01)" in content
         assert "### Upgrades\n- old-pkg: 0.5 \u2192 1.0" in content
         assert "### Additions\n- new-pkg: 3.0" in content
+
+
+class TestBuildReleaseNotes:
+    """Test build_release_notes function."""
+
+    def test_full_format_with_digest_and_changes(self):
+        """Notes contain image ref, digest pin, and changelog sections."""
+        changes = [
+            VersionChange(name="pkg", old_version="1.0", new_version="2.0", change_type="upgrade"),
+        ]
+        result = build_release_notes(
+            "2024.01.0", "ghcr.io/tankdonut/tools", "sha256:abc123", changes
+        )
+        assert result == (
+            "Image: `ghcr.io/tankdonut/tools:2024.01.0`\n"
+            "\n"
+            "Digest `sha256:abc123` — pin: `ghcr.io/tankdonut/tools:2024.01.0@sha256:abc123`\n"
+            "\n"
+            "### Upgrades\n"
+            "- pkg: 1.0 \u2192 2.0"
+        )
+
+    def test_without_digest_omits_pin_line(self):
+        """A None digest omits the digest pin entirely."""
+        changes = [
+            VersionChange(name="pkg", old_version="1.0", new_version="2.0", change_type="upgrade"),
+        ]
+        result = build_release_notes("2024.01.0", "ghcr.io/tankdonut/tools", None, changes)
+        assert result == (
+            "Image: `ghcr.io/tankdonut/tools:2024.01.0`\n\n### Upgrades\n- pkg: 1.0 \u2192 2.0"
+        )
+
+    def test_without_changes_is_image_only(self):
+        """Empty changes list yields notes with only the image line."""
+        result = build_release_notes("2024.01.0", "ghcr.io/tankdonut/tools", "sha256:abc123", [])
+        assert result == (
+            "Image: `ghcr.io/tankdonut/tools:2024.01.0`\n"
+            "\n"
+            "Digest `sha256:abc123` — pin: `ghcr.io/tankdonut/tools:2024.01.0@sha256:abc123`"
+        )
+
+
+class TestBumpPyprojectVersion:
+    """Test bump_pyproject_version function."""
+
+    def test_replaces_version_and_returns_true(self, tmp_path):
+        """The first version assignment is replaced and True is returned."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text('[project]\nname = "packages"\nversion = "1.0.0"\n')
+        changed = bump_pyproject_version(pyproject, "2024.01.0")
+        assert changed is True
+        content = pyproject.read_text()
+        assert 'version = "2024.01.0"' in content
+        assert 'version = "1.0.0"' not in content
+
+    def test_only_first_assignment_replaced(self, tmp_path):
+        """Only the first version assignment is rewritten."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text('version = "1.0.0"\nversion = "9.9.9"\n')
+        bump_pyproject_version(pyproject, "2024.01.0")
+        content = pyproject.read_text()
+        assert content == 'version = "2024.01.0"\nversion = "9.9.9"\n'
+
+    def test_already_at_version_returns_false(self, tmp_path):
+        """An unchanged file returns False and is left untouched."""
+        pyproject = tmp_path / "pyproject.toml"
+        original = '[project]\nversion = "2024.01.0"\n'
+        pyproject.write_text(original)
+        changed = bump_pyproject_version(pyproject, "2024.01.0")
+        assert changed is False
+        assert pyproject.read_text() == original
+
+    def test_preserves_surrounding_content(self, tmp_path):
+        """All other keys and sections survive the rewrite."""
+        pyproject = tmp_path / "pyproject.toml"
+        original = (
+            "[project]\n"
+            'name = "packages"\n'
+            'version = "1.0.0"\n'
+            'requires-python = ">=3.13,<4.0"\n'
+            "\n"
+            "[tool.ruff]\n"
+            "line-length = 100\n"
+        )
+        pyproject.write_text(original)
+        bump_pyproject_version(pyproject, "2026.08.0")
+        content = pyproject.read_text()
+        assert 'name = "packages"' in content
+        assert 'requires-python = ">=3.13,<4.0"' in content
+        assert "[tool.ruff]" in content
+        assert "line-length = 100" in content

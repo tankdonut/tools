@@ -1,6 +1,9 @@
 name: Release
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -12,8 +15,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  cut-tag:
+    # Fires on every push to main (e.g. the weekly tools.update --pr bump
+    # merge, which is authored by BUMP_PAT and therefore does trigger
+    # workflows). When the push changed tool versions in
+    # tasks/metadata.yaml, wait for the commit's container image and cut
+    # the next CalVer tag. The release job below then publishes, chained
+    # in this same run.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.detect.outputs.has_changes }}
+      calver_tag: ${{ steps.detect.outputs.calver_tag }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
@@ -26,151 +39,53 @@ jobs:
       - name: Sync Dependencies
         run: uv sync
 
-      - name: Store metadata diff
-        id: check-version-changes
-        run: |
-          DIFF=$(git diff HEAD~1 HEAD -- tasks/metadata.yaml)
-          {
-            echo "METADATA_DIFF<<GHAEOF"
-            echo "$DIFF"
-            echo "GHAEOF"
-          } >> "$GITHUB_ENV"
-          HAS_CHANGES=$(uv run python -c "
-          import os
-          from tasks.release import has_version_changes
-          diff = os.environ['METADATA_DIFF']
-          print('true' if has_version_changes(diff) else 'false')
-          ")
-          echo "has_changes=${HAS_CHANGES}" >> "$GITHUB_OUTPUT"
-
-      - name: List existing tags
-        if: steps.check-version-changes.outputs.has_changes == 'true'
-        run: git tag -l
-
-      - name: Calculate CalVer tag and generate changelog
-        id: calver
-        if: steps.check-version-changes.outputs.has_changes == 'true'
+      - name: Detect version changes and calculate CalVer tag
+        id: detect
         run: |
           uv run python -c "
           import datetime
           import subprocess
 
-          from tasks.release import calculate_calver_tag, generate_changelog, parse_metadata_diff
+          from tasks.release import calculate_calver_tag, has_version_changes
 
           diff = subprocess.run(
               ['git', 'diff', 'HEAD~1', 'HEAD', '--', 'tasks/metadata.yaml'],
               capture_output=True, text=True,
           ).stdout
+
+          if not has_version_changes(diff):
+              print('No tool version changes in this push; skipping release.')
+              with open('$GITHUB_OUTPUT', 'a') as f:
+                  f.write('has_changes=false\n')
+              raise SystemExit(0)
 
           existing_tags = subprocess.run(
               ['git', 'tag', '-l'],
               capture_output=True, text=True,
           ).stdout.split()
 
-          today = datetime.date.today()
-          tag = calculate_calver_tag(today, existing_tags)
-          changes = parse_metadata_diff(diff)
-          changelog = generate_changelog(changes)
+          tag = calculate_calver_tag(datetime.date.today(), existing_tags)
+          skip = 'true' if tag in existing_tags else 'false'
 
-          print(f'calver_tag={tag}')
+          print(f'has_changes=true calver_tag={tag} skip={skip}')
           with open('$GITHUB_OUTPUT', 'a') as f:
+              f.write('has_changes=true\n')
               f.write(f'calver_tag={tag}\n')
-              f.write('changelog<<EOF\n')
-              f.write(changelog)
-              f.write('\nEOF\n')
+              f.write(f'skip={skip}\n')
           "
 
-      - name: Check idempotency
-        id: idempotency
-        if: steps.check-version-changes.outputs.has_changes == 'true'
-        run: |
-          TAG="${{ steps.calver.outputs.calver_tag }}"
-          if git tag -l "$TAG" | grep -q .; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create git tag
+      - name: Report idempotent skip
         if: >-
-          steps.check-version-changes.outputs.has_changes == 'true' &&
-          steps.idempotency.outputs.skip != 'true'
-        run: |
-          TAG="${{ steps.calver.outputs.calver_tag }}"
-          git tag -a "$TAG" -m "Release $TAG"
-
-      - name: Push tag
-        if: >-
-          steps.check-version-changes.outputs.has_changes == 'true' &&
-          steps.idempotency.outputs.skip != 'true'
-        run: |
-          TAG="${{ steps.calver.outputs.calver_tag }}"
-          git push origin "$TAG"
-
-      - name: Create GitHub Release
-        if: >-
-          steps.check-version-changes.outputs.has_changes == 'true' &&
-          steps.idempotency.outputs.skip != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.calver.outputs.calver_tag }}"
-          CHANGELOG="${{ steps.calver.outputs.changelog }}"
-          gh release create "$TAG" --title "$TAG" --notes "$CHANGELOG"
-
-      - name: Update CHANGELOG.md and bump pyproject.toml
-        if: >-
-          steps.check-version-changes.outputs.has_changes == 'true' &&
-          steps.idempotency.outputs.skip != 'true'
-        env:
-          RELEASE_TAG: ${{ steps.calver.outputs.calver_tag }}
-        run: |
-          uv run python -c "
-          import datetime
-          import os
-          import re
-          import subprocess
-          from pathlib import Path
-
-          from tasks.release import parse_metadata_diff, update_changelog_file
-
-          diff = subprocess.run(
-              ['git', 'diff', 'HEAD~1', 'HEAD', '--', 'tasks/metadata.yaml'],
-              capture_output=True, text=True,
-          ).stdout
-          changes = parse_metadata_diff(diff)
-          tag = os.environ['RELEASE_TAG']
-          today_str = datetime.date.today().isoformat()
-
-          changelog_path = Path('CHANGELOG.md')
-          update_changelog_file(changelog_path, tag, today_str, changes)
-
-          pyproject = Path('pyproject.toml')
-          content = pyproject.read_text()
-          content = re.sub(r'version = \".*\"', f'version = \"{tag}\"', content, count=1)
-          pyproject.write_text(content)
-          "
-
-      - name: Configure git
-        if: >-
-          steps.check-version-changes.outputs.has_changes == 'true' &&
-          steps.idempotency.outputs.skip != 'true'
-        uses: tankdonut/github-actions/actions/git-bot-config@v1
-
-      - name: Commit and push changes
-        if: >-
-          steps.check-version-changes.outputs.has_changes == 'true' &&
-          steps.idempotency.outputs.skip != 'true'
-        run: |
-          TAG="${{ steps.calver.outputs.calver_tag }}"
-          git add CHANGELOG.md pyproject.toml
-          git commit -m "chore: release ${TAG}"
-          git push origin main
+          steps.detect.outputs.has_changes == 'true' &&
+          steps.detect.outputs.skip == 'true'
+        run: >-
+          echo "Tag ${{ steps.detect.outputs.calver_tag }} already cut;
+          the release job will verify publishing is complete."
 
       - name: Install crane
         if: >-
-          steps.check-version-changes.outputs.has_changes == 'true' &&
-          steps.idempotency.outputs.skip != 'true'
+          steps.detect.outputs.has_changes == 'true' &&
+          steps.detect.outputs.skip != 'true'
         run: |
           CRANE_VERSION="0.20.2"
           curl -sL "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz" \
@@ -179,28 +94,193 @@ jobs:
 
       - name: Login to GHCR
         if: >-
-          steps.check-version-changes.outputs.has_changes == 'true' &&
-          steps.idempotency.outputs.skip != 'true'
+          steps.detect.outputs.has_changes == 'true' &&
+          steps.detect.outputs.skip != 'true'
         uses: tankdonut/github-actions/actions/ghcr-login@v1
         with:
           runtime: "crane"
 
-      - name: Tag container image
+      - name: Wait for commit image
+        # The Build & Publish Image workflow builds image:<sha> from this
+        # same push concurrently. A release tag must never exist before its
+        # image does (the release would reference an image that can 404 or
+        # silently never appear if the build failed), so block here before
+        # tagging and fail loudly if the image never arrives.
         if: >-
-          steps.check-version-changes.outputs.has_changes == 'true' &&
-          steps.idempotency.outputs.skip != 'true'
+          steps.detect.outputs.has_changes == 'true' &&
+          steps.detect.outputs.skip != 'true'
         run: |
           IMAGE="ghcr.io/${{ github.repository }}"
-          TAG="${{ steps.calver.outputs.calver_tag }}"
           DIGEST="${{ github.sha }}"
-          for i in $(seq 1 10); do
-            if crane digest "${IMAGE}@${DIGEST}" 2>/dev/null; then
-              echo "Image found, tagging..."
-              crane tag "${IMAGE}@${DIGEST}" "${TAG}"
+          for i in $(seq 1 30); do
+            if crane digest "${IMAGE}@${DIGEST}" >/dev/null 2>&1; then
+              echo "Image ${IMAGE}@${DIGEST} is available."
               exit 0
             fi
-            echo "Waiting for image... attempt $i/10"
+            echo "Waiting for image... attempt $i/30"
             sleep 30
           done
-          echo "ERROR: Image not found after 10 attempts" >&2
+          echo "::error::Image ${IMAGE}@${DIGEST} not found after 15 minutes"
           exit 1
+
+      - name: Configure git
+        if: >-
+          steps.detect.outputs.has_changes == 'true' &&
+          steps.detect.outputs.skip != 'true'
+        uses: tankdonut/github-actions/actions/git-bot-config@v1
+
+      - name: Create and push release tag
+        if: >-
+          steps.detect.outputs.has_changes == 'true' &&
+          steps.detect.outputs.skip != 'true'
+        run: |
+          TAG="${{ steps.detect.outputs.calver_tag }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+  release:
+    # Chained after cut-tag in the SAME run, not via `on: push: tags`:
+    # a tag pushed with the workflow's GITHUB_TOKEN does not fire new
+    # workflow runs (GITHUB_TOKEN-created events never trigger workflows
+    # — the same rule that forces BUMP_PAT to exist for the bump PRs), so
+    # a tag-push trigger could only work for manually cut tags. Ordering
+    # guarantee: cut-tag verified the commit image exists before tagging,
+    # so this job can never publish a release whose image is missing.
+    # Runs whenever version changes were detected — including when the
+    # tag was already cut — because every publishing step below is
+    # idempotent, making this job safe to re-run after a partial failure.
+    needs: [cut-tag]
+    if: >-
+      needs.cut-tag.result == 'success' &&
+      needs.cut-tag.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ needs.cut-tag.outputs.calver_tag }}
+    steps:
+      - name: Checkout Repository
+        # Full history: the changelog diff spans the previous release tag
+        # to this one, and the CalVer tags pushed by cut-tag must be
+        # visible here (fetch-depth: 0 fetches all tags and branches).
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python and uv
+        uses: tankdonut/github-actions/actions/setup-python-uv@v1
+
+      - name: Sync Dependencies
+        run: uv sync
+
+      - name: Install crane
+        run: |
+          CRANE_VERSION="0.20.2"
+          curl -sL "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz" \
+            | tar -xzf - crane
+          sudo mv crane /usr/local/bin/crane
+
+      - name: Login to GHCR
+        uses: tankdonut/github-actions/actions/ghcr-login@v1
+        with:
+          runtime: "crane"
+
+      - name: Resolve previous release tag
+        id: prev
+        run: |
+          TAG="${RELEASE_TAG}"
+          PREV=$(git tag -l '20*' | sort -V | awk -v t="$TAG" '$0==t{print p} {p=$0}')
+          echo "prev_tag=${PREV:-}" >> "$GITHUB_OUTPUT"
+
+      - name: Tag container image
+        # Fail fast if the image is missing rather than publishing a
+        # release that references an unavailable image.
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}"
+          DIGEST="${{ github.sha }}"
+          crane digest "${IMAGE}@${DIGEST}" >/dev/null
+          crane tag "${IMAGE}@${DIGEST}" "${RELEASE_TAG}"
+
+      - name: Build release notes
+        env:
+          PREV_TAG: ${{ steps.prev.outputs.prev_tag }}
+        run: |
+          uv run python -c "
+          import os
+          import subprocess
+
+          from tasks.release import build_release_notes, parse_metadata_diff
+
+          tag = os.environ['RELEASE_TAG']
+          prev = os.environ.get('PREV_TAG', '')
+          image = f\"ghcr.io/{os.environ['GITHUB_REPOSITORY']}\"
+
+          diff_range = f'{prev}..{tag}' if prev else 'HEAD~1..HEAD'
+          diff = subprocess.run(
+              ['git', 'diff', diff_range, '--', 'tasks/metadata.yaml'],
+              capture_output=True, text=True,
+          ).stdout
+          changes = parse_metadata_diff(diff)
+
+          digest = subprocess.run(
+              ['crane', 'digest', f'{image}@{os.environ[\"GITHUB_SHA\"]}'],
+              capture_output=True, text=True,
+          ).stdout.strip() or None
+
+          notes = build_release_notes(tag, image, digest, changes)
+          with open('release-notes.md', 'w') as f:
+              f.write(notes + '\n')
+          print(notes)
+          "
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Release ${RELEASE_TAG} already exists; skipping creation."
+            exit 0
+          fi
+          gh release create "${RELEASE_TAG}" \
+            --title "${RELEASE_TAG}" \
+            --notes-file release-notes.md
+
+      - name: Configure git
+        uses: tankdonut/github-actions/actions/git-bot-config@v1
+
+      - name: Update CHANGELOG.md and pyproject.toml
+        env:
+          PREV_TAG: ${{ steps.prev.outputs.prev_tag }}
+        run: |
+          TAG="${RELEASE_TAG}"
+          git checkout -B main origin/main
+          if [ -f CHANGELOG.md ] && grep -q "^## ${TAG} " CHANGELOG.md; then
+            echo "Changelog entry for ${TAG} already present; skipping."
+            exit 0
+          fi
+          uv run python -c "
+          import datetime
+          import os
+          import subprocess
+          from pathlib import Path
+
+          from tasks.release import bump_pyproject_version, parse_metadata_diff, update_changelog_file
+
+          tag = os.environ['RELEASE_TAG']
+          prev = os.environ.get('PREV_TAG', '')
+
+          diff_range = f'{prev}..{tag}' if prev else 'HEAD~1..HEAD'
+          diff = subprocess.run(
+              ['git', 'diff', diff_range, '--', 'tasks/metadata.yaml'],
+              capture_output=True, text=True,
+          ).stdout
+          changes = parse_metadata_diff(diff)
+
+          update_changelog_file(Path('CHANGELOG.md'), tag, datetime.date.today().isoformat(), changes)
+          bump_pyproject_version(Path('pyproject.toml'), tag)
+          "
+          git add CHANGELOG.md pyproject.toml
+          if git diff --cached --quiet; then
+            echo "Nothing to commit; changelog and version already up to date."
+            exit 0
+          fi
+          git commit -m "chore: release ${TAG}"
+          git push origin main
