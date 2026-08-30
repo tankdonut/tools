@@ -1194,6 +1194,73 @@ class TestCompareVersions:
         assert compare_versions(left, right) == expected
 
 
+class TestCalverUpdates:
+    """Test CalVer support in the update detection flow."""
+
+    @patch("tasks.tools._updates.get_latest_github_release_version")
+    def test_calver_update_detected(self, mock_latest):
+        """A newer CalVer tag should be reported as an available update."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.tools._updates import check_package_update
+
+        ten_days_ago = datetime.now(UTC) - timedelta(days=10)
+        mock_latest.return_value = ("2026.09.02.1", ten_days_ago.isoformat(), 4)
+
+        metadata = {
+            "agentctl": {
+                "version": "2026.08.29.2",
+                "repo_url": "https://github.com/tankdonut/agent-base",
+            }
+        }
+
+        result = check_package_update("agentctl", metadata["agentctl"])
+
+        assert result is not None
+        assert result["package"] == "agentctl"
+        assert result["from_version"] == "2026.08.29.2"
+        assert result["to_version"] == "2026.09.02.1"
+
+    @patch("tasks.tools._updates.get_latest_github_release_version")
+    def test_calver_same_version_no_update(self, mock_latest):
+        """The same CalVer version should not be reported as an update."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.tools._updates import check_package_update
+
+        ten_days_ago = datetime.now(UTC) - timedelta(days=10)
+        mock_latest.return_value = ("2026.08.29.2", ten_days_ago.isoformat(), 4)
+
+        metadata = {
+            "agentctl": {
+                "version": "2026.08.29.2",
+                "repo_url": "https://github.com/tankdonut/agent-base",
+            }
+        }
+
+        result = check_package_update("agentctl", metadata["agentctl"])
+
+        assert result is None
+
+    @patch("tasks.tools._updates.get_previous_github_releases")
+    def test_calver_previous_release_fallback(self, mock_prev):
+        """_try_previous_release should compare CalVer versions numerically."""
+        from datetime import UTC, datetime, timedelta
+
+        from tasks.tools._updates import _try_previous_release
+
+        old = (datetime.now(UTC) - timedelta(days=30)).isoformat()
+        mock_prev.return_value = [("2026.09.05", old, 2), ("2026.08.29.2", old, 2)]
+
+        result, checked = _try_previous_release(
+            "agentctl", "tankdonut", "agent-base", "2026.08.29.2"
+        )
+
+        assert result is not None
+        assert result["to_version"] == "2026.09.05"
+        assert checked != []
+
+
 class TestLogging:
     """Test logging behavior in exception handlers."""
 
