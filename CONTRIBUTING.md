@@ -185,6 +185,31 @@ Store the token under **Settings → Secrets and variables → Actions** as
 `BUMP_PAT`. A classic PAT with the `repo` scope also works but grants broader
 access than necessary; prefer the fine-grained token above.
 
+## Release Process
+
+Releases are fully automated and keyed off tool version changes in
+`tasks/metadata.yaml` — no manual dispatch is needed:
+
+1. A push to `main` that changes tool versions (typically the weekly
+   `tools.update --pr` bump merge) triggers the `release` workflow's
+   `cut-tag` job. It calculates the next CalVer tag (`YYYY.MM.N`), waits for
+   the commit's container image to publish, and pushes the tag.
+2. The `release` job — chained after `cut-tag` in the same run, because a
+   tag pushed with `GITHUB_TOKEN` cannot trigger another workflow — then:
+   - generates release notes from the metadata diff (upgrades, additions,
+     removals) plus the image digest pin,
+   - tags the container image `ghcr.io/<repository>:<tag>`,
+   - creates the GitHub release, and
+   - prepends the entry to `CHANGELOG.md` and bumps `version` in
+     `pyproject.toml` on `main`.
+
+Pushes without version changes are skipped, already-cut tags are not
+re-pushed, and every publishing step is idempotent, so a failed release can
+be retried by re-running the workflow (`workflow_dispatch`). The release
+workflow runs entirely on the default `GITHUB_TOKEN`; the only PAT in the
+chain is `BUMP_PAT` (documented above), which authors the bump PRs whose
+merges start the process.
+
 ## SHA256 Integrity Verification
 
 When a `sha256` field is present in a tool's metadata, the install task

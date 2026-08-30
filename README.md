@@ -47,6 +47,7 @@ Copy `.env.example` to `.env` for local configuration.
 | `lint-and-test.yaml`            | Push to `main`, pull requests             | Runs pre-commit hooks (lint, tests)   |
 | `build-and-publish-image.yaml`  | Push to `main`, pull requests, manual     | Builds and pushes container to GHCR   |
 | `bump-tool-versions.yaml`       | Weekly schedule (Sundays 03:00), manual   | Runs `tools.update --pr` for bumps    |
+| `release.yaml`                  | Push to `main` (tool version changes), manual | Cuts CalVer tag, creates release, tags image, updates changelog |
 | `prune-ghcr-images.yaml`        | Daily schedule (01:30 UTC), manual        | Removes stale GHCR images             |
 
 ## Documentation
