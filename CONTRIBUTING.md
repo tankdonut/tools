@@ -208,11 +208,11 @@ re-pushed, and every publishing step is idempotent, so a failed release can
 be retried by re-running the workflow (`workflow_dispatch`) — `cut-tag`
 detects the incomplete release and the `release` job finishes it.
 
-The workflow runs on the default `GITHUB_TOKEN` except for one push: the
-`chore: release` commit to protected `main`, which is authenticated with
-`BUMP_PAT` (documented above) because `GITHUB_TOKEN` cannot push to the
-protected branch. `BUMP_PAT` also authors the bump PRs whose merges start
-the process.
+The workflow runs on the default `GITHUB_TOKEN` except for one merge: the
+`chore: release` commit (CHANGELOG.md + pyproject version) lands on protected
+`main` through a short-lived pull request, admin squash-merged with `BUMP_PAT`
+(documented above) — `main` requires a PR, so no identity may push directly.
+`BUMP_PAT` also authors the bump PRs whose merges start the process.
 
 ## SHA256 Integrity Verification
 
