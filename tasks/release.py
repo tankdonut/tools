@@ -165,7 +165,7 @@ def update_changelog_file(
         existing = path.read_text()
         path.write_text(f"{entry}\n\n{existing}")
     else:
-        path.write_text(entry)
+        path.write_text(f"# Changelog\n\n{entry}\n")
 
 
 def build_release_notes(

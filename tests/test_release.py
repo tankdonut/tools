@@ -326,7 +326,7 @@ class TestUpdateChangelogFile:
     """Test update_changelog_file function."""
 
     def test_creates_new_file_when_not_exists(self, tmp_path):
-        """Creates a new changelog file when it does not exist."""
+        """Creates a new changelog with an h1 title and trailing newline."""
         changelog = tmp_path / "CHANGELOG.md"
         changes = [
             VersionChange(name="pkg", old_version="1.0", new_version="2.0", change_type="upgrade"),
@@ -334,8 +334,9 @@ class TestUpdateChangelogFile:
         update_changelog_file(changelog, "2024.01.0", "2024-01-15", changes)
         assert changelog.exists()
         content = changelog.read_text()
-        assert "## 2024.01.0 (2024-01-15)" in content
+        assert content.startswith("# Changelog\n\n## 2024.01.0 (2024-01-15)\n")
         assert "### Upgrades" in content
+        assert content.endswith("\n")
 
     def test_prepends_to_existing_file(self, tmp_path):
         """Prepends new entry before existing content."""
@@ -350,14 +351,14 @@ class TestUpdateChangelogFile:
         assert "## 2023.12.0 (2023-12-01)" in content
 
     def test_entry_format_starts_with_header(self, tmp_path):
-        """Generated entry starts with the expected header format."""
+        """Generated entry keeps the expected heading shape under the h1."""
         changelog = tmp_path / "CHANGELOG.md"
         changes = [
             VersionChange(name="pkg", old_version="1.0", new_version="2.0", change_type="upgrade"),
         ]
         update_changelog_file(changelog, "2024.01.0", "2024-01-15", changes)
         content = changelog.read_text()
-        assert content.startswith("## 2024.01.0 (2024-01-15)\n### Upgrades")
+        assert "# Changelog\n\n## 2024.01.0 (2024-01-15)\n### Upgrades" in content
 
     def test_empty_changes_is_noop_for_missing_file(self, tmp_path):
         """Empty changes list does not create a file when it does not exist."""
@@ -674,7 +675,7 @@ class TestChangelogTask:
         release_mod.changelog(Context())
 
         changelog_text = (tmp_path / "CHANGELOG.md").read_text()
-        assert changelog_text.startswith("## 2026.08.0 (")
+        assert changelog_text.startswith("# Changelog\n\n## 2026.08.0 (")
         assert "### Upgrades" in changelog_text
         assert "- opencode: 1.18.19 → 1.18.21" in changelog_text
         assert 'version = "2026.08.0"' in (tmp_path / "pyproject.toml").read_text()
