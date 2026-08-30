@@ -58,6 +58,29 @@ class TestCalculateCalverTag:
 class TestParseMetadataDiff:
     """Test parse_metadata_diff function."""
 
+    def test_hunk_header_attribution(self):
+        """Version-only hunks attribute via the @@ section key, and a
+        later key line in one hunk does not leak into the next hunk."""
+        diff = (
+            "--- a/tasks/metadata.yaml\n"
+            "+++ b/tasks/metadata.yaml\n"
+            "@@ -63,8 +63,8 @@ crush:\n"
+            "   repo_url: https://example.com/crush\n"
+            "-  version: 0.90.0\n"
+            "+  version: 0.91.0\n"
+            " ct:\n"
+            "   description: >\n"
+            "@@ -228,8 +228,8 @@ opencode:\n"
+            "   repo_url: https://example.com/opencode\n"
+            "-  version: 1.18.19\n"
+            "+  version: 1.18.21\n"
+        )
+        changes = parse_metadata_diff(diff)
+        assert [(c.name, c.old_version, c.new_version) for c in changes] == [
+            ("crush", "0.90.0", "0.91.0"),
+            ("opencode", "1.18.19", "1.18.21"),
+        ]
+
     def test_single_version_upgrade(self):
         """Single version upgrade detects old and new version."""
         diff = (

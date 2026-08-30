@@ -222,7 +222,11 @@ jobs:
             exit 0
           fi
           uv run inv release.changelog
-          git add CHANGELOG.md pyproject.toml
+          # The pyproject version bump must propagate to uv.lock, or every
+          # later `uv run` re-locks and dirties the tree (breaking the
+          # pre-commit pytest hook for everyone).
+          uv lock
+          git add CHANGELOG.md pyproject.toml uv.lock
           if git diff --cached --quiet; then
             echo "Nothing to commit; changelog and version already up to date."
             exit 0

@@ -44,7 +44,22 @@ def parse_metadata_diff(diff_text: str) -> list[VersionChange]:
     current_package = ""
 
     for line in diff_text.splitlines():
-        if not line or line.startswith(("---", "+++", "@@", "\\")):
+        if not line:
+            continue
+
+        if line.startswith("@@"):
+            # Git hunk headers carry the enclosing top-level key
+            # ("@@ -63,8 +63,8 @@ opencode:"). Version-only hunks rely on
+            # it for attribution — the key line itself may not appear in
+            # the hunk body.
+            section = line.split("@@", 2)[-1].strip()
+            if section:
+                key_match = re.match(r"^(\S+):$", section)
+                if key_match:
+                    current_package = key_match.group(1)
+            continue
+
+        if line.startswith(("---", "+++", "\\")):
             continue
 
         if line[0] == "+":
