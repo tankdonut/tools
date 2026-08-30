@@ -162,15 +162,25 @@ jobs:
           echo "prev_tag=${PREV:-}" >> "$GITHUB_OUTPUT"
 
       - name: Tag container image
-        # Fail fast if the image is missing rather than publishing a
-        # release that references an unavailable image.
+        # Reached via the normal chain (image already confirmed by
+        # cut-tag's wait) or via the recovery path (skip=true), where the
+        # current HEAD's image may still be building — so poll here too
+        # and fail loudly if it never arrives.
         id: image_digest
         run: |
           IMAGE="ghcr.io/${{ github.repository }}"
           SHA="${{ github.sha }}"
-          DIGEST=$(crane digest "${IMAGE}:${SHA}")
-          crane tag "${IMAGE}:${SHA}" "${RELEASE_TAG}"
-          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+          for i in $(seq 1 30); do
+            if DIGEST=$(crane digest "${IMAGE}:${SHA}"); then
+              crane tag "${IMAGE}:${SHA}" "${RELEASE_TAG}"
+              echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Waiting for image... attempt $i/30"
+            sleep 30
+          done
+          echo "::error::Image ${IMAGE}:${SHA} not found after 15 minutes"
+          exit 1
 
       - name: Build release notes
         env:
