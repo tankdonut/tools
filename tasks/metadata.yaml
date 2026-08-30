@@ -63,8 +63,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.90.0
-  sha256: 4eebb9ce1a3655560bae03c64bebcc546f6b24ba9f9ebd1e8ea844b8c3b37ea0
+  version: 0.91.0
+  sha256: 74afc41d03243894b5221f03b1bbc4032f1a219671ec9116148946dc2af4c708
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -228,8 +228,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.19
-  sha256: 7bb35487c55f9957f5d91ae60be6fa49fc8f74629c210c1719ed75fdbf7e2bd9
+  version: 1.18.21
+  sha256: d910c3ed7613bb5791a328904615d41cc25b7d3a6b470e3199ab0426a995b38a
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
