@@ -226,7 +226,7 @@ class TestGenerateChangelog:
             VersionChange(name="pkg", old_version="1.0", new_version="2.0", change_type="upgrade"),
         ]
         result = generate_changelog(changes)
-        assert result == "### Upgrades\n- pkg: 1.0 \u2192 2.0"
+        assert result == "### Upgrades\n\n- pkg: 1.0 \u2192 2.0"
 
     def test_addition_formatting(self):
         """Addition entries format as name: new_version."""
@@ -234,7 +234,7 @@ class TestGenerateChangelog:
             VersionChange(name="pkg", old_version=None, new_version="1.0", change_type="addition"),
         ]
         result = generate_changelog(changes)
-        assert result == "### Additions\n- pkg: 1.0"
+        assert result == "### Additions\n\n- pkg: 1.0"
 
     def test_removal_formatting(self):
         """Removal entries format as just name without version."""
@@ -242,7 +242,7 @@ class TestGenerateChangelog:
             VersionChange(name="pkg", old_version="0.5", new_version=None, change_type="removal"),
         ]
         result = generate_changelog(changes)
-        assert result == "### Removals\n- pkg"
+        assert result == "### Removals\n\n- pkg"
 
     def test_mixed_changes_grouped(self):
         """Mixed changes are grouped in order: upgrades, additions, removals."""
@@ -338,10 +338,27 @@ class TestUpdateChangelogFile:
         assert "### Upgrades" in content
         assert content.endswith("\n")
 
-    def test_prepends_to_existing_file(self, tmp_path):
-        """Prepends new entry before existing content."""
+    def test_inserts_entry_below_title_header(self, tmp_path):
+        """New entry goes below the title heading, which stays the first line."""
         changelog = tmp_path / "CHANGELOG.md"
-        changelog.write_text("## 2023.12.0 (2023-12-01)\n### Upgrades\n- old: 0.5 \u2192 1.0")
+        changelog.write_text(
+            "# Changelog\n\n## 2023.12.0 (2023-12-01)\n### Upgrades\n- old: 0.5 → 1.0\n"
+        )
+        changes = [
+            VersionChange(name="pkg", old_version="1.0", new_version="2.0", change_type="upgrade"),
+        ]
+        update_changelog_file(changelog, "2024.01.0", "2024-01-15", changes)
+        content = changelog.read_text()
+        lines = content.splitlines()
+        assert lines[0] == "# Changelog"
+        assert "# Changelog\n\n## 2024.01.0 (2024-01-15)" in content
+        assert "## 2023.12.0 (2023-12-01)" in content
+        assert content.index("## 2024.01.0") < content.index("## 2023.12.0")
+
+    def test_prepends_to_headerless_file(self, tmp_path):
+        """Headerless files keep the entry at the top."""
+        changelog = tmp_path / "CHANGELOG.md"
+        changelog.write_text("## 2023.12.0 (2023-12-01)\n### Upgrades\n- old: 0.5 → 1.0")
         changes = [
             VersionChange(name="pkg", old_version="1.0", new_version="2.0", change_type="upgrade"),
         ]
@@ -349,6 +366,19 @@ class TestUpdateChangelogFile:
         content = changelog.read_text()
         assert content.startswith("## 2024.01.0 (2024-01-15)")
         assert "## 2023.12.0 (2023-12-01)" in content
+
+    def test_title_only_file_gets_entry_below_title(self, tmp_path):
+        """A file holding only the title heading gains the entry under it."""
+        changelog = tmp_path / "CHANGELOG.md"
+        changelog.write_text("# Changelog\n")
+        changes = [
+            VersionChange(name="pkg", old_version="1.0", new_version="2.0", change_type="upgrade"),
+        ]
+        update_changelog_file(changelog, "2024.01.0", "2024-01-15", changes)
+        content = changelog.read_text()
+        assert content == (
+            "# Changelog\n\n## 2024.01.0 (2024-01-15)\n\n### Upgrades\n\n- pkg: 1.0 → 2.0\n"
+        )
 
     def test_entry_format_starts_with_header(self, tmp_path):
         """Generated entry keeps the expected heading shape under the h1."""
@@ -358,7 +388,7 @@ class TestUpdateChangelogFile:
         ]
         update_changelog_file(changelog, "2024.01.0", "2024-01-15", changes)
         content = changelog.read_text()
-        assert "# Changelog\n\n## 2024.01.0 (2024-01-15)\n### Upgrades" in content
+        assert "# Changelog\n\n## 2024.01.0 (2024-01-15)\n\n### Upgrades" in content
 
     def test_empty_changes_is_noop_for_missing_file(self, tmp_path):
         """Empty changes list does not create a file when it does not exist."""
@@ -369,15 +399,17 @@ class TestUpdateChangelogFile:
     def test_empty_changes_is_noop_for_existing_file(self, tmp_path):
         """Empty changes list does not modify an existing file."""
         changelog = tmp_path / "CHANGELOG.md"
-        original = "## 2023.12.0 (2023-12-01)\n### Upgrades\n- pkg: 0.5 \u2192 1.0\n"
+        original = "# Changelog\n\n## 2023.12.0 (2023-12-01)\n### Upgrades\n- pkg: 0.5 \u2192 1.0\n"
         changelog.write_text(original)
         update_changelog_file(changelog, "2024.01.0", "2024-01-15", [])
         assert changelog.read_text() == original
 
-    def test_existing_content_preserved_after_prepend(self, tmp_path):
-        """Existing content is fully preserved after prepending a new entry."""
+    def test_existing_content_preserved_after_insert(self, tmp_path):
+        """Existing content is fully preserved after inserting a new entry."""
         changelog = tmp_path / "CHANGELOG.md"
-        existing_body = "## 2023.12.0 (2023-12-01)\n### Upgrades\n- old-pkg: 0.5 \u2192 1.0\n"
+        existing_body = (
+            "# Changelog\n\n## 2023.12.0 (2023-12-01)\n### Upgrades\n- old-pkg: 0.5 \u2192 1.0\n"
+        )
         changelog.write_text(existing_body)
         changes = [
             VersionChange(
@@ -388,7 +420,7 @@ class TestUpdateChangelogFile:
         content = changelog.read_text()
         assert "## 2023.12.0 (2023-12-01)" in content
         assert "### Upgrades\n- old-pkg: 0.5 \u2192 1.0" in content
-        assert "### Additions\n- new-pkg: 3.0" in content
+        assert "### Additions\n\n- new-pkg: 3.0" in content
 
 
 class TestBuildReleaseNotes:
@@ -408,6 +440,7 @@ class TestBuildReleaseNotes:
             "Digest `sha256:abc123` — pin: `ghcr.io/tankdonut/tools:2024.01.0@sha256:abc123`\n"
             "\n"
             "### Upgrades\n"
+            "\n"
             "- pkg: 1.0 \u2192 2.0"
         )
 
@@ -418,7 +451,7 @@ class TestBuildReleaseNotes:
         ]
         result = build_release_notes("2024.01.0", "ghcr.io/tankdonut/tools", None, changes)
         assert result == (
-            "Image: `ghcr.io/tankdonut/tools:2024.01.0`\n\n### Upgrades\n- pkg: 1.0 \u2192 2.0"
+            "Image: `ghcr.io/tankdonut/tools:2024.01.0`\n\n### Upgrades\n\n- pkg: 1.0 \u2192 2.0"
         )
 
     def test_without_changes_is_image_only(self):

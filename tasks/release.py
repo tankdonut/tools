@@ -118,21 +118,21 @@ def generate_changelog(changes: list[VersionChange]) -> str:
 
     upgrades = [c for c in changes if c.change_type == "upgrade"]
     if upgrades:
-        lines = ["### Upgrades"]
+        lines = ["### Upgrades", ""]
         for c in upgrades:
             lines.append(f"- {c.name}: {c.old_version} \u2192 {c.new_version}")
         sections.append("\n".join(lines))
 
     additions = [c for c in changes if c.change_type == "addition"]
     if additions:
-        lines = ["### Additions"]
+        lines = ["### Additions", ""]
         for c in additions:
             lines.append(f"- {c.name}: {c.new_version}")
         sections.append("\n".join(lines))
 
     removals = [c for c in changes if c.change_type == "removal"]
     if removals:
-        lines = ["### Removals"]
+        lines = ["### Removals", ""]
         for c in removals:
             lines.append(f"- {c.name}")
         sections.append("\n".join(lines))
@@ -152,20 +152,37 @@ def has_version_changes(diff_text: str) -> bool:
     return False
 
 
+CHANGELOG_TITLE = "# Changelog"
+
+
 def update_changelog_file(
     path: Path, tag: str, date_str: str, changes: list[VersionChange]
 ) -> None:
-    """Prepend a new changelog entry to the file at the given path."""
+    """Insert a new changelog entry below the title heading.
+
+    Keeps the title as the first line when the file already starts with it;
+    a headerless file gets the entry at the top.
+    """
     if not changes:
         return
 
-    entry = f"## {tag} ({date_str})\n{generate_changelog(changes)}"
+    entry = f"## {tag} ({date_str})\n\n{generate_changelog(changes)}"
 
-    if path.exists():
-        existing = path.read_text()
-        path.write_text(f"{entry}\n\n{existing}")
+    if not path.exists():
+        path.write_text(f"{CHANGELOG_TITLE}\n\n{entry}\n")
+        return
+
+    existing = path.read_text()
+    body = existing.lstrip("\n")
+    first_line, _, remainder = body.partition("\n")
+    if first_line.strip() == CHANGELOG_TITLE:
+        remainder = remainder.lstrip("\n")
+        if remainder:
+            path.write_text(f"{CHANGELOG_TITLE}\n\n{entry}\n\n{remainder}")
+        else:
+            path.write_text(f"{CHANGELOG_TITLE}\n\n{entry}\n")
     else:
-        path.write_text(f"# Changelog\n\n{entry}\n")
+        path.write_text(f"{entry}\n\n{existing}")
 
 
 def build_release_notes(
@@ -318,7 +335,7 @@ def notes(c: Context) -> None:
 
 @task
 def changelog(c: Context) -> None:
-    """Prepend the RELEASE_TAG entry to CHANGELOG.md and bump pyproject.toml."""
+    """Insert the RELEASE_TAG entry below the CHANGELOG.md title and bump pyproject.toml."""
     tag = _require_env("RELEASE_TAG")
     changes = changes_for_range(_release_diff_range(tag))
     update_changelog_file(Path("CHANGELOG.md"), tag, datetime.date.today().isoformat(), changes)
