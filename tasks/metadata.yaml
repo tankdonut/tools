@@ -131,6 +131,17 @@ flux:
   license: APACHE-2.0
   version: 2.9.4
   sha256: c2c397a52930f52d2005c01d276116b059d062de379386d58e98115380a766a2
+flyctl:
+  description: >
+    Command line tools for fly.io services
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}_{{version}}_{{ "macOS" if os == "darwin" else os|capitalize }}_{{ "x86_64" if arch == "amd64" else arch }}.tar.gz
+
+  repo_url: https://github.com/superfly/flyctl
+  license: APACHE-2.0
+  version: 0.4.99
+  sha256: 384a14958b214b18ebda784dee101a633ceae626ac4bcccee0fc7ebb111247a4
 golangci-lint:
   description: >
     Fast linters runner for Go
