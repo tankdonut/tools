@@ -1,5 +1,16 @@
 # yaml-language-server: $schema=metadata.schema.json
 ---
+actionlint:
+  description: >
+    Static checker for GitHub Actions workflow files
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}_{{version}}_{{os}}_{{arch}}.tar.gz
+
+  repo_url: https://github.com/rhysd/actionlint
+  license: MIT
+  version: 1.7.12
+  sha256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
 agentctl:
   description: >
     Operator CLI for scaffolding and managing standard agent projects
