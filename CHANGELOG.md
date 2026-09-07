@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.09.2 (2026-09-07)
+
+### Additions
+
+- actionlint: 1.7.12
+
 ## 2026.09.1 (2026-09-06)
 
 ### Additions
