@@ -20,8 +20,8 @@ agentctl:
 
   repo_url: https://github.com/tankdonut/agent-base
   license: MIT
-  version: 2026.08.29.2
-  sha256: fc1f526ca19c529cec1418c3970fc4a3de880ff608ed28ed68f2e24352b26e15
+  version: 2026.08.31
+  sha256: 3eeaf6bafd445331cf73fa8b8d24b73c3c50cc368c8ab7b7d65a1d5e2697da1b
 argocd:
   description: >
     Declarative Continuous Deployment for Kubernetes
@@ -74,8 +74,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.91.2
-  sha256: 225eb39adff654190fb1d1afb4c28a68a39e8397e44779896035e8fbb5f1de16
+  version: 0.92.0
+  sha256: 7d9aca9ab7808ee828a0bb0fde01d96fc480ce0a66a5ff617aa27ac09e23cbd5
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -118,8 +118,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.167.0
-  sha256: 8d7b39ad749698693458aa701c0c8d522035f923455a9bf0ee03a0b01601e51c
+  version: 1.168.0
+  sha256: ad817330e1a12fd60729f105d8c39af31ca845f221a60886a1b2215f74d9b35d
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -140,8 +140,8 @@ flux:
 
   repo_url: https://github.com/fluxcd/flux2
   license: APACHE-2.0
-  version: 2.9.4
-  sha256: c2c397a52930f52d2005c01d276116b059d062de379386d58e98115380a766a2
+  version: 2.9.5
+  sha256: b853df82adfd7736f580692f9f734473d571606307139f8fd20c2a80dd1ff473
 flyctl:
   description: >
     Command line tools for fly.io services
@@ -239,8 +239,8 @@ minikube:
 
   repo_url: https://github.com/kubernetes/minikube
   license: APACHE-2.0
-  version: 1.38.1
-  sha256: 099477eaf248bcb5bcea8ce78a2898e93ac01461c35189da1848c3de82ecd22e
+  version: 1.39.0
+  sha256: b738496da01be06bbaf80c688f57ce25acd3849fbb518155f3a88e03ef555aa4
 opencode:
   description: >
     The open source coding agent.
@@ -250,8 +250,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.25
-  sha256: 58a3729a6f3432dd6d2917fcc4a949788891a035818646ad480e12c947f56e78
+  version: 1.18.27
+  sha256: 4af5494f9433f59db8c1e344198f0ee72a50c06ec009fb4a8aeab4c2d4abd702
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -360,8 +360,8 @@ terraform:
 
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
-  version: 1.16.0
-  sha256: 41d05b927aa174f15d1228c4eba832a323b716c68b415ef5a00179f46cc602d3
+  version: 1.16.1
+  sha256: 745d33b4b02b7980c62a38ec1beea24ee084ea8caf3f503c200554bd9a0cbe49
 terraform-docs:
   description: >
     Generate docs from terraform modules
