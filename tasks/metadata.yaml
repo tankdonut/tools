@@ -20,8 +20,8 @@ agentctl:
 
   repo_url: https://github.com/tankdonut/agent-base
   license: MIT
-  version: 2026.08.31
-  sha256: 3eeaf6bafd445331cf73fa8b8d24b73c3c50cc368c8ab7b7d65a1d5e2697da1b
+  version: 2026.09.05
+  sha256: 4cf333a88d75f0843c13b1f09873e3cbb668c4208f53265e1c85d2c0daf86621
 argocd:
   description: >
     Declarative Continuous Deployment for Kubernetes
@@ -250,8 +250,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.27
-  sha256: 4af5494f9433f59db8c1e344198f0ee72a50c06ec009fb4a8aeab4c2d4abd702
+  version: 1.18.29
+  sha256: ea800b7ff56226b70952126c9fc1e2517ca4c4b5682fd9d3f9e87449697a1194
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
