@@ -20,8 +20,8 @@ agentctl:
 
   repo_url: https://github.com/tankdonut/agent-base
   license: MIT
-  version: 2026.09.05
-  sha256: 4cf333a88d75f0843c13b1f09873e3cbb668c4208f53265e1c85d2c0daf86621
+  version: 2026.09.07
+  sha256: 747542f039242c5d0562e149be33352915c7ef8bae0de3a4c42ffe47123716c0
 argocd:
   description: >
     Declarative Continuous Deployment for Kubernetes
@@ -74,8 +74,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.92.0
-  sha256: 7d9aca9ab7808ee828a0bb0fde01d96fc480ce0a66a5ff617aa27ac09e23cbd5
+  version: 0.93.1
+  sha256: 3086719c3e4ff592b567c22691157457158b87245469009e530447481c975102
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -151,8 +151,8 @@ flyctl:
 
   repo_url: https://github.com/superfly/flyctl
   license: APACHE-2.0
-  version: 0.4.99
-  sha256: 384a14958b214b18ebda784dee101a633ceae626ac4bcccee0fc7ebb111247a4
+  version: 0.4.101
+  sha256: 81ada177239513e12e825c525290ad4de91f55a1c287d654876b6eadbb28b7f6
 golangci-lint:
   description: >
     Fast linters runner for Go
@@ -250,8 +250,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.29
-  sha256: ea800b7ff56226b70952126c9fc1e2517ca4c4b5682fd9d3f9e87449697a1194
+  version: 1.18.30
+  sha256: 55007246858165496ff85ba1c2b648f7421e8e2013bf4189a680c9ff8e699d17
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -294,8 +294,8 @@ shfmt:
 
   repo_url: https://github.com/mvdan/sh
   license: BSD-3-Clause
-  version: 3.14.0
-  sha256: fe42021c7272ef2d67ea36cbc3031683c625d0badec733ef3a57b567246a0b66
+  version: 3.14.1
+  sha256: 76e77641faa025814b77f153b29796b8e6fa2fca03e0c76a691608b86c7ea7bf
 skaffold:
   description: >
     Easy and Repeatable Kubernetes Development
@@ -360,8 +360,8 @@ terraform:
 
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
-  version: 1.16.1
-  sha256: 745d33b4b02b7980c62a38ec1beea24ee084ea8caf3f503c200554bd9a0cbe49
+  version: 1.16.2
+  sha256: 0d17011f0c4664539b164b044903d04e296c86c13cb9f28040076c65cfb3985a
 terraform-docs:
   description: >
     Generate docs from terraform modules
