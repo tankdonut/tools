@@ -68,11 +68,16 @@ def install_single_package(
     check_required_tools(download_url, package_name=name)
 
     target = install_path / name
-    if force and target.exists():
-        if target.is_dir():
-            shutil.rmtree(target)
-        else:
+    if force and (target.exists() or target.is_symlink()):
+        if target.is_symlink() or target.is_file():
             target.unlink()
+        else:
+            shutil.rmtree(target)
+
+    if force and package_metadata.get("package_dir", False):
+        pkg_dir = install_path / f"{name}.d"
+        if pkg_dir.exists():
+            shutil.rmtree(pkg_dir)
 
     if (install_path / name).exists():
         console.print(f"  [yellow]SKIP[/yellow] {name}: already installed at {install_path}")
@@ -88,6 +93,7 @@ def install_single_package(
         install_path=str(install_path),
         package_exe=package_metadata.get("package_exe", None),
         binary=package_metadata.get("binary", False),
+        package_dir=package_metadata.get("package_dir", False),
         sha256=package_metadata.get("sha256"),
         verbose=verbose,
     )

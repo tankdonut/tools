@@ -12,4 +12,7 @@
 {% if data.sha256 is defined %}
   sha256: {{ data.sha256 }}
 {% endif %}
+{% if data.package_dir is defined %}
+  package_dir: {{ data.package_dir | lower }}
+{% endif %}
 {% endfor %}
