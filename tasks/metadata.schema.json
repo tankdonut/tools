@@ -41,6 +41,10 @@
       "package_dir": {
         "type": "boolean",
         "description": "Install the archive's top-level directory (executable plus runtime assets) as '<name>.d' with a relative symlink '<name>' pointing to the executable inside. For tar.gz archives whose top level is a '<name>/' directory rather than a single binary."
+      },
+      "package_exe": {
+        "type": "string",
+        "description": "Name or slash-separated relative path of the executable inside the downloaded artifact. Defaults to the tool name; for package_dir archives it locates the executable within the extracted top-level directory (e.g. 'bin/codegraph')."
       }
     },
     "additionalProperties": false

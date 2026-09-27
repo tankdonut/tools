@@ -15,4 +15,7 @@
 {% if data.package_dir is defined %}
   package_dir: {{ data.package_dir | lower }}
 {% endif %}
+{% if data.package_exe is defined %}
+  package_exe: {{ data.package_exe }}
+{% endif %}
 {% endfor %}

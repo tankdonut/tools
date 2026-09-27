@@ -74,8 +74,40 @@ class TestPackageDownloaderPackageDir:
         assert f"ln -sfn pi.d/pi {tmp_path}/pi" in commands
         assert f"rm -rf {tmp_path}/pi.d" in commands
 
+    def test_download_tar_gz_dir_discovers_platform_named_dir(self, tmp_path):
+        """package_dir install discovers a platform-suffixed top-level dir and
+        symlinks to a nested package_exe path inside it."""
+        mock_ctx = Mock()
+
+        def fake_run(command: str, **kwargs) -> None:
+            if command.startswith("tar -zx"):
+                extract_root = Path(command.split(" -C ")[1].split(" ")[0])
+                (extract_root / "codegraph-linux-x64" / "bin").mkdir(parents=True)
+
+        mock_ctx.run.side_effect = fake_run
+        downloader = PackageDownloader(
+            mock_ctx,
+            "codegraph",
+            "https://example.com/codegraph-linux-x64.tar.gz",
+            str(tmp_path),
+            package_exe="bin/codegraph",
+            package_dir=True,
+        )
+        downloader.download()
+
+        commands = [call.args[0] for call in mock_ctx.run.call_args_list]
+        assert any(
+            cmd.startswith("cp -a ")
+            and "/codegraph-linux-x64" in cmd
+            and cmd.endswith(f" {tmp_path}/codegraph.d")
+            for cmd in commands
+        )
+        assert f"chmod -v +x {tmp_path}/codegraph.d/bin/codegraph" in commands
+        assert f"ln -sfn codegraph.d/bin/codegraph {tmp_path}/codegraph" in commands
+        assert f"rm -rf {tmp_path}/codegraph.d" in commands
+
     def test_download_tar_gz_dir_requires_top_level_dir(self, tmp_path):
-        """A clear error is raised when the archive has no '<name>/' top-level dir."""
+        """A clear error is raised when the archive has no single top-level dir."""
         mock_ctx = Mock()
         downloader = PackageDownloader(
             mock_ctx,
@@ -85,7 +117,7 @@ class TestPackageDownloaderPackageDir:
             package_dir=True,
         )
 
-        with pytest.raises(RuntimeError, match="no top-level 'pi/' directory"):
+        with pytest.raises(RuntimeError, match="exactly one top-level directory"):
             downloader.download()
 
 

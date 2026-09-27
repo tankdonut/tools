@@ -156,9 +156,11 @@ class PackageDownloader:
         """Install a tar.gz archive whose top-level directory wraps the executable and
         its runtime assets (e.g. mise-compatible release archives).
 
-        The archive's '<name>/' directory is copied to '<install_path>/<name>.d' and a
-        relative symlink '<install_path>/<name>' points to the executable inside it,
-        keeping the installation relocatable (e.g. COPY /dist to /vendor/bin).
+        The archive's single top-level directory (whether '<name>/' or a
+        platform-suffixed '<name>-<os>-<arch>/') is copied to
+        '<install_path>/<name>.d' and a relative symlink '<install_path>/<name>'
+        points to the executable inside it, keeping the installation
+        relocatable (e.g. COPY /dist to /vendor/bin).
         """
         self._mkdir(self._install_path)
         with tempfile.TemporaryDirectory(suffix=self._package_name) as temp_dir:
@@ -166,12 +168,13 @@ class PackageDownloader:
             self._curl(self._download_url, archive_path)
             self._verify(archive_path)
             self._run(f"tar -zx -C {temp_dir} -f {archive_path}")
-            extracted_dir = f"{temp_dir}/{self._package_name}"
-            if not Path(extracted_dir).is_dir():
+            top_level_dirs = [p for p in Path(temp_dir).iterdir() if p.is_dir()]
+            if len(top_level_dirs) != 1:
                 raise RuntimeError(
-                    f"Archive for '{self._package_name}' has no top-level "
-                    f"'{self._package_name}/' directory, which package_dir requires"
+                    f"Archive for '{self._package_name}' must contain exactly one "
+                    "top-level directory, which package_dir requires"
                 )
+            extracted_dir = str(top_level_dirs[0])
             target_dir = f"{self._install_path}/{self._package_name}.d"
             self._run(f"rm -rf {target_dir}")
             self._run(f"cp -a {extracted_dir} {target_dir}")
