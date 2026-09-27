@@ -118,8 +118,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.168.0
-  sha256: ad817330e1a12fd60729f105d8c39af31ca845f221a60886a1b2215f74d9b35d
+  version: 1.169.0
+  sha256: 790f22a2f3d644b7bb9e9dbb491245ee19e64266434f941d8395aba8a99c38cf
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -261,8 +261,8 @@ packer:
 
   repo_url: https://github.com/hashicorp/packer
   license: MPL-2.0
-  version: 1.16.0
-  sha256: 5edcd14ab59b535040c512dbecd6ec9ef976a000b073c19d93e4c431c948581e
+  version: 1.16.1
+  sha256: af38a9e93e4ed1b9ca68206ae969c64c300c82a3dde46a780dfa629f0867f651
 pi:
   description: >
     AI agent toolkit: unified LLM API, agent loop, TUI, coding agent CLI
