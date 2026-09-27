@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.09.9 (2026-09-27)
+
+### Additions
+
+- codegraph: 1.6.0
+
 ## 2026.09.8 (2026-09-27)
 
 ### Additions
