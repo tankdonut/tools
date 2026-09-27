@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 import tempfile
 
 from invoke.context import Context
@@ -20,6 +21,7 @@ class PackageDownloader:
         install_path: str,
         package_exe: str | None = None,
         binary: bool = False,
+        package_dir: bool = False,
         sha256: str | None = None,
         verbose: bool = False,
     ) -> None:
@@ -28,6 +30,7 @@ class PackageDownloader:
         self._download_url = download_url
         self._install_path = install_path
         self._binary = binary
+        self._package_dir = package_dir
         self._sha256 = sha256
         self._verbose = verbose
 
@@ -70,7 +73,10 @@ class PackageDownloader:
         elif self._download_url.endswith(".bz2") and self._binary:
             self.download_binary_bz2()
         elif self._download_url.endswith(".tar.gz"):
-            self.download_tar_gz()
+            if self._package_dir:
+                self.download_tar_gz_dir()
+            else:
+                self.download_tar_gz()
         elif self._download_url.endswith(".tar.xz"):
             self.download_tar_xz()
         elif self._download_url.endswith(".tar"):
@@ -145,6 +151,35 @@ class PackageDownloader:
                     xargs -I {{}} cp -f {{}} {self._install_path}/{self._package_exe}"
             )
             self._chmod(f"{self._install_path}/{self._package_exe}")
+
+    def download_tar_gz_dir(self) -> None:
+        """Install a tar.gz archive whose top-level directory wraps the executable and
+        its runtime assets (e.g. mise-compatible release archives).
+
+        The archive's '<name>/' directory is copied to '<install_path>/<name>.d' and a
+        relative symlink '<install_path>/<name>' points to the executable inside it,
+        keeping the installation relocatable (e.g. COPY /dist to /vendor/bin).
+        """
+        self._mkdir(self._install_path)
+        with tempfile.TemporaryDirectory(suffix=self._package_name) as temp_dir:
+            archive_path = f"{temp_dir}/{self._package_name}.tar.gz"
+            self._curl(self._download_url, archive_path)
+            self._verify(archive_path)
+            self._run(f"tar -zx -C {temp_dir} -f {archive_path}")
+            extracted_dir = f"{temp_dir}/{self._package_name}"
+            if not Path(extracted_dir).is_dir():
+                raise RuntimeError(
+                    f"Archive for '{self._package_name}' has no top-level "
+                    f"'{self._package_name}/' directory, which package_dir requires"
+                )
+            target_dir = f"{self._install_path}/{self._package_name}.d"
+            self._run(f"rm -rf {target_dir}")
+            self._run(f"cp -a {extracted_dir} {target_dir}")
+            self._chmod(f"{target_dir}/{self._package_exe}")
+            self._run(
+                f"ln -sfn {self._package_name}.d/{self._package_exe} "
+                f"{self._install_path}/{self._package_name}"
+            )
 
     def download_tar_xz(self) -> None:
         self._mkdir(self._install_path)

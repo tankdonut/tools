@@ -263,6 +263,18 @@ packer:
   license: MPL-2.0
   version: 1.16.0
   sha256: 5edcd14ab59b535040c512dbecd6ec9ef976a000b073c19d93e4c431c948581e
+pi:
+  description: >
+    AI agent toolkit: unified LLM API, agent loop, TUI, coding agent CLI
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}-{{os}}-{{ "x64" if arch == "amd64" else arch }}.tar.gz
+
+  repo_url: https://github.com/earendil-works/pi
+  license: MIT
+  version: 0.87.1
+  sha256: 80d78dd62d50049a006b981d994c61255bcc10e730b0c278d4ea0a755909764c
+  package_dir: true
 rtk:
   description: >
     High-performance CLI proxy that reduces LLM token consumption by 60-90% on common dev commands

@@ -37,6 +37,10 @@
       "sha256": {
         "type": "string",
         "description": "SHA256 hex digest of the downloaded artifact for integrity verification."
+      },
+      "package_dir": {
+        "type": "boolean",
+        "description": "Install the archive's top-level directory (executable plus runtime assets) as '<name>.d' with a relative symlink '<name>' pointing to the executable inside. For tar.gz archives whose top level is a '<name>/' directory rather than a single binary."
       }
     },
     "additionalProperties": false

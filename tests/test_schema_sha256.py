@@ -32,6 +32,20 @@ class TestSchemaSHA256:
         }
         validate_metadata(metadata)
 
+    def test_schema_validates_metadata_with_package_dir(self) -> None:
+        """Schema accepts metadata that includes package_dir field."""
+        metadata = {
+            "test-tool": {
+                "description": "A test tool",
+                "download_url": "https://example.com/{{version}}/tool.tar.gz",
+                "repo_url": "https://github.com/test/tool",
+                "license": "MIT",
+                "version": "1.0.0",
+                "package_dir": True,
+            },
+        }
+        validate_metadata(metadata)
+
     def test_existing_metadata_validates_against_updated_schema(self) -> None:
         """Current metadata.yaml still validates with new schema."""
         metadata = load_metadata()
@@ -67,3 +81,32 @@ class TestTemplateSHA256:
         }
         output = render_metadata(metadata)
         assert "sha256" not in output
+
+    def test_template_renders_package_dir(self) -> None:
+        """Template outputs lowercase package_dir when present in metadata."""
+        metadata = {
+            "test-tool": {
+                "description": "A test tool",
+                "download_url": "https://example.com/{{version}}/tool.tar.gz",
+                "repo_url": "https://github.com/test/tool",
+                "license": "MIT",
+                "version": "1.0.0",
+                "package_dir": True,
+            },
+        }
+        output = render_metadata(metadata)
+        assert "package_dir: true" in output
+
+    def test_template_omits_package_dir(self) -> None:
+        """Template does not output package_dir when absent."""
+        metadata = {
+            "test-tool": {
+                "description": "A test tool",
+                "download_url": "https://example.com/{{version}}/tool.tar.gz",
+                "repo_url": "https://github.com/test/tool",
+                "license": "MIT",
+                "version": "1.0.0",
+            },
+        }
+        output = render_metadata(metadata)
+        assert "package_dir" not in output
