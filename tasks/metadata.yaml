@@ -52,8 +52,8 @@ bd:
 
   repo_url: https://github.com/steveyegge/beads
   license: MIT
-  version: 1.3.0
-  sha256: 2f92b904ecf35b607e44dc5c39229173af69c54f1183e8d709f1773540cdcf3b
+  version: 1.3.1
+  sha256: 3219443a9734b89b93fb16ee8d65844759fa1b3cd3cf139c606b7353cfb0715c
 codegraph:
   description: >
     Pre-indexed code knowledge graph for coding agents, auto-syncs on code changes, 100% local
@@ -63,8 +63,8 @@ codegraph:
 
   repo_url: https://github.com/colbymchenry/codegraph
   license: MIT
-  version: 1.6.0
-  sha256: de3391f79ed42622d937e6cd5b7642a7ea8bb7d1473607e80b879ba73ef216b0
+  version: 1.6.2
+  sha256: ef0af416092128fb1ccc723786000b7edf4a6971fe604acd08bf966e4f37b828
   package_dir: true
   package_exe: bin/codegraph
 cr:
@@ -87,8 +87,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.96.1
-  sha256: 5411b0906a82162dcab4a99071d70accf1caad0eee69789416dd607943c6680d
+  version: 0.97.1
+  sha256: 1b7cbe0600a3797538a74dc00dd8c4bac54ac4b8f4455ba5ff2312b29c7bd598
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -131,8 +131,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.175.0
-  sha256: c722a6d48fab51a5edf6926e1ddc07ed58481184cad19e187ed39a2c0dc297f4
+  version: 1.177.0
+  sha256: 34d3954721bfb8cdb42032e78d98274f157426fa6332511ae356edcce59dade3
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -142,8 +142,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.101.0
-  sha256: a606c6ae6e912acf18a636c77d1ea0dd420ef5a0704d349c33489f37e47358f8
+  version: 1.102.0
+  sha256: b7e0ad3cd69a779a1d5c449047bb7823b3e46b79630cfad4930affe955940432
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -153,8 +153,8 @@ flux:
 
   repo_url: https://github.com/fluxcd/flux2
   license: APACHE-2.0
-  version: 2.9.5
-  sha256: b853df82adfd7736f580692f9f734473d571606307139f8fd20c2a80dd1ff473
+  version: 2.9.6
+  sha256: b4d22673e9246cbd628881f1a9ef3b090085dced291e42d804555cee8e8d42c5
 flyctl:
   description: >
     Command line tools for fly.io services
@@ -164,8 +164,8 @@ flyctl:
 
   repo_url: https://github.com/superfly/flyctl
   license: APACHE-2.0
-  version: 0.4.108
-  sha256: 38173df9dadd6a1f413ce435b6745b29ce2893c0ba918af17d7a1eced8089844
+  version: 0.4.111
+  sha256: 1878d7fb1f8a418039042cf0749e4b7216c6c7018b66ae10611a64c2b6d9aa9e
 golangci-lint:
   description: >
     Fast linters runner for Go
@@ -208,8 +208,8 @@ k3s:
 
   repo_url: https://github.com/k3s-io/k3s
   license: APACHE-2.0
-  version: 1.37.0+k3s1
-  sha256: 39eed8f53f277497dfc2542f66eab0ed68a94dfc598946dbebfb50366916c7a2
+  version: 1.37.1+k3s1
+  sha256: 92b94582eb7b34a8cf532e6006842b9ed215a6783cf56a3dd6271fd35243b2c0
 k9s:
   description: >
     🐶 Kubernetes CLI To Manage Your Clusters In Style!
@@ -241,8 +241,8 @@ kustomize:
 
   repo_url: https://github.com/kubernetes-sigs/kustomize
   license: APACHE-2.0
-  version: 5.8.1
-  sha256: 029a7f0f4e1932c52a0476cf02a0fd855c0bb85694b82c338fc648dcb53a819d
+  version: 5.8.2
+  sha256: 06af0a202c2b831207d0173f9c9cdb1b30abceca0747cb3fbb72792d26055c95
 minikube:
   description: >
     Local Kubernetes, focusing on making it easy to learn and develop for Kubernetes.
@@ -263,8 +263,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.32
-  sha256: 3046e0404fdc60fb80307e7a47824ba07477364178a4d09baa8548496dd6d43b
+  version: 1.18.34
+  sha256: 0f22479647226d1d2dd99595d20082ee7bda3870b62dc6a90b41efc1a71d7e9a
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -285,8 +285,8 @@ pi:
 
   repo_url: https://github.com/earendil-works/pi
   license: MIT
-  version: 0.87.1
-  sha256: 80d78dd62d50049a006b981d994c61255bcc10e730b0c278d4ea0a755909764c
+  version: 1.0.2
+  sha256: 0d7687a6a9fcbaa88ff664cb6b28683ce9ee3e028931b55eb48a70ae9a285d18
   package_dir: true
 rtk:
   description: >
@@ -297,8 +297,8 @@ rtk:
 
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
-  version: 0.49.0
-  sha256: 7278231dfd7e6a730a4ab7f847b195bcf02289c2d57622b0dab75a6411100c8f
+  version: 0.51.0
+  sha256: 5028d3b19a8f0990d30fec9fbb07e32782bc5698e618fb1861aad8a9ccba4eb5
 shellcheck:
   description: >
     ShellCheck, a static analysis tool for shell scripts
@@ -374,8 +374,8 @@ task:
 
   repo_url: https://github.com/go-task/task
   license: MIT
-  version: 3.53.1
-  sha256: a54a408f6861ff921f6e87774180db31bacd8c1e7c944ca696db9fea49a82fc7
+  version: 3.54.0
+  sha256: 680859dbb4d881a9c72d4d9a8f510825450849af8567deacd7302c01124416fb
 terraform:
   description: >
     Terraform is a tool for building, changing, and combining infrastructure safely and efficiently.
@@ -385,8 +385,8 @@ terraform:
 
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
-  version: 1.16.4
-  sha256: dc94af0eef1147718ad7c8daea792ed199e3e0492eec180d0adafa2a65a879df
+  version: 1.16.5
+  sha256: 2bc2fcfff033265c9e02ca0351f01794eb122f62a9b2a49a3294b9e49eaab5e4
 terraform-docs:
   description: >
     Generate docs from terraform modules
@@ -429,5 +429,5 @@ tilt:
 
   repo_url: https://github.com/tilt-dev/tilt
   license: APACHE-2.0
-  version: 0.37.7
-  sha256: b695193fab68def8310cb971fa60bbe47ba0a782e24f54ebad287c13316a61b0
+  version: 0.37.8
+  sha256: e39513f958705d30524d55f68b1d46fbef2b46a0da568efd00e6383dee6be44f
