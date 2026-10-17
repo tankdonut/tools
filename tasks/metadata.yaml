@@ -31,8 +31,8 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.5.3
-  sha256: b860f73f57cbddd993cd446f5236d797c1b1ac8554857b2683d2669f17e765b4
+  version: 3.5.4
+  sha256: 9cd8cb9f8f785357af441a9544cc1c63a2b8d9bad45ebe88503ab8e315c64ae3
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -87,8 +87,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.97.1
-  sha256: 1b7cbe0600a3797538a74dc00dd8c4bac54ac4b8f4455ba5ff2312b29c7bd598
+  version: 0.98.1
+  sha256: d85d913effef350f0152f594a70bd9749ad455bf15af77bb0d2b731036079885
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -98,8 +98,8 @@ ct:
 
   repo_url: https://github.com/helm/chart-testing
   license: APACHE-2.0
-  version: 3.14.0
-  sha256: d16f0583616885423826241164ce1f6589c6fe5332fa74f374ebd2bd3cb3fe1f
+  version: 3.15.0
+  sha256: 467561730f25fe09d5e6cd09a3e1f6aa759871c657a57602947c716d9be2c583
 ctlptl:
   description: >
     Making local Kubernetes clusters fun and easy to set up
@@ -120,8 +120,8 @@ direnv:
 
   repo_url: https://github.com/direnv/direnv
   license: MIT
-  version: 2.37.1
-  sha256: 1f1b93dd6f38523fde26dfac96151ef9d31a374e3005cd3345fb93555ae0c9b5
+  version: 2.38.2
+  sha256: 148820a187930d36ca6a204504e5cdb30d8396cd1a97e64c3b3f10d793c11247
 doctl:
   description: >
     A command line tool for DigitalOcean services
@@ -131,8 +131,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.177.0
-  sha256: 34d3954721bfb8cdb42032e78d98274f157426fa6332511ae356edcce59dade3
+  version: 1.181.0
+  sha256: a6b25c8fb2e635f24bef1cf69732204a2e4f32b0efcdff03e310fe5ad9cae7c4
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -142,8 +142,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.102.0
-  sha256: b7e0ad3cd69a779a1d5c449047bb7823b3e46b79630cfad4930affe955940432
+  version: 1.102.1
+  sha256: 15ce3784444dffaf911073361957678fbdd1009fdccfdcb8aa294cd473201975
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -164,8 +164,8 @@ flyctl:
 
   repo_url: https://github.com/superfly/flyctl
   license: APACHE-2.0
-  version: 0.4.111
-  sha256: 1878d7fb1f8a418039042cf0749e4b7216c6c7018b66ae10611a64c2b6d9aa9e
+  version: 0.4.115
+  sha256: 8b99a37a546c6c5b3ecb10c0c1d962c62b1cda328934f17c55180281cbdeb72f
 golangci-lint:
   description: >
     Fast linters runner for Go
@@ -241,8 +241,8 @@ kustomize:
 
   repo_url: https://github.com/kubernetes-sigs/kustomize
   license: APACHE-2.0
-  version: 5.8.2
-  sha256: 06af0a202c2b831207d0173f9c9cdb1b30abceca0747cb3fbb72792d26055c95
+  version: 5.8.3
+  sha256: cb9e31198d3f63b44848bd0afc4c8efc56e6cfef9c93a4a39a211940e6decd61
 minikube:
   description: >
     Local Kubernetes, focusing on making it easy to learn and develop for Kubernetes.
@@ -263,8 +263,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.18.34
-  sha256: 0f22479647226d1d2dd99595d20082ee7bda3870b62dc6a90b41efc1a71d7e9a
+  version: 1.18.35
+  sha256: c8f888b451f5494a18f858fffb0e0b68f4e4baa9c241761c5f206884f0fa640d
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -285,8 +285,8 @@ pi:
 
   repo_url: https://github.com/earendil-works/pi
   license: MIT
-  version: 1.0.2
-  sha256: 0d7687a6a9fcbaa88ff664cb6b28683ce9ee3e028931b55eb48a70ae9a285d18
+  version: 1.1.0
+  sha256: 3faa94666cd3849d37af320ff749407d0271b07a9b94f420c87e30866e10e289
   package_dir: true
 rtk:
   description: >
