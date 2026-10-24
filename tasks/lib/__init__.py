@@ -99,3 +99,35 @@ def compare_versions(left: str, right: str) -> int | None:
     if left_semver > right_semver:
         return 1
     return 0
+
+
+def _patch_invoke_fionread() -> None:
+    """Make invoke's bytes_to_read safe on Python 3.14+.
+
+    invoke 3.0.3 passes a 2-byte buffer to fcntl.ioctl(FIONREAD), which writes
+    4 bytes. Python 3.14 detects the undersized buffer and raises SystemError
+    (python/cpython#132915), killing invoke's stdin forwarding thread the first
+    time a keystroke is pending while Context.run executes a subprocess.
+
+    Upstream fix is still unreleased (pyinvoke/invoke#1070). Drop this patch
+    once a released invoke > 3.0.3 fixes bytes_to_read.
+    """
+    import fcntl
+    import struct
+    import termios
+
+    from invoke import runners, terminals
+    from invoke.util import has_fileno, isatty
+
+    def bytes_to_read(input_) -> int:
+        if not terminals.WINDOWS and isatty(input_) and has_fileno(input_):
+            buf = bytearray(4)
+            fcntl.ioctl(input_, termios.FIONREAD, buf, True)
+            return int(struct.unpack("i", buf)[0])
+        return 1
+
+    terminals.bytes_to_read = bytes_to_read
+    runners.bytes_to_read = bytes_to_read
+
+
+_patch_invoke_fionread()
