@@ -33,3 +33,24 @@ class TestRustArch:
         """Test ARMv7 architecture."""
         mock_machine.return_value = "armv7l"
         assert get_rust_arch() == "arm"
+
+
+class TestInvokeBytesToReadCompat:
+    """invoke's bytes_to_read must keep working on Python 3.14+."""
+
+    def test_reads_pending_tty_bytes(self):
+        """FIONREAD fills 4 bytes; Python 3.14 rejects invoke's 2-byte buffer."""
+        import os
+
+        from invoke.runners import bytes_to_read
+        import tasks.lib  # noqa: F401  applies the invoke compat patch
+
+        master, slave = os.openpty()
+        stream = os.fdopen(slave, "rb", buffering=0)
+        try:
+            os.write(master, b"hi\n")
+            assert stream.isatty()
+            assert bytes_to_read(stream) == 3
+        finally:
+            stream.close()
+            os.close(master)
