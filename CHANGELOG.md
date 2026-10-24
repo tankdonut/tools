@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.10.6 (2026-10-24)
+
+### Removals
+
+- agentctl
+
 ## 2026.10.5 (2026-10-24)
 
 ### Additions
