@@ -42,8 +42,8 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.5.4
-  sha256: 9cd8cb9f8f785357af441a9544cc1c63a2b8d9bad45ebe88503ab8e315c64ae3
+  version: 3.5.5
+  sha256: c3ddfa606fc3e89ab14f55bda6600b207c355b028f8eaabe69b817a4c4621aba
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -142,8 +142,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 1.181.0
-  sha256: a6b25c8fb2e635f24bef1cf69732204a2e4f32b0efcdff03e310fe5ad9cae7c4
+  version: 2.0.0
+  sha256: c9aca9dfb307e7070e2a4ca3944c1e4df5c2ebb6c311b2fa3f0dde5369a51c02
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -153,8 +153,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.102.1
-  sha256: 15ce3784444dffaf911073361957678fbdd1009fdccfdcb8aa294cd473201975
+  version: 1.103.2
+  sha256: 03f18148ab2eb73c8481b1b637691c1e598d73e6fe4c1b25354e8acbeae05694
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -175,8 +175,8 @@ flyctl:
 
   repo_url: https://github.com/superfly/flyctl
   license: APACHE-2.0
-  version: 0.4.115
-  sha256: 8b99a37a546c6c5b3ecb10c0c1d962c62b1cda328934f17c55180281cbdeb72f
+  version: 0.4.118
+  sha256: 0f2fabbb29904a7bac8bd96009314d26751084c33e098fcc393e2dac6c472f60
 golangci-lint:
   description: >
     Fast linters runner for Go
@@ -186,8 +186,8 @@ golangci-lint:
 
   repo_url: https://github.com/golangci/golangci-lint
   license: GPL-3.0
-  version: 2.14.0
-  sha256: ab90aeb7b066f92a33415b638a50fe5344bbb75a0d32ad30cc248d88f81032ab
+  version: 2.15.0
+  sha256: 9b7fe6a6bf6334b98decf8d86b11415ea7889afdabdd1959fdce23af2a9ebcea
 helm-docs:
   description: >
     A tool for automatically generating markdown documentation for helm charts
@@ -274,8 +274,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.19.0
-  sha256: 7bb9e61ad6feacf2e89c10a6a2c1840e3de4220bb50ba1fc7110f31806076aec
+  version: 1.19.3
+  sha256: 13a8fb2978302071b86f9d7e00da9c8895f9cd846978379c3bdc6a5333536c9b
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -296,8 +296,8 @@ pi:
 
   repo_url: https://github.com/earendil-works/pi
   license: MIT
-  version: 1.1.0
-  sha256: 3faa94666cd3849d37af320ff749407d0271b07a9b94f420c87e30866e10e289
+  version: 1.3.0
+  sha256: 24f5be328b66d4da36876296989501974f43ab8434fbb57c35c523a3ea505ded
   package_dir: true
 rtk:
   description: >
@@ -308,8 +308,8 @@ rtk:
 
   repo_url: https://github.com/rtk-ai/rtk
   license: MIT
-  version: 0.51.0
-  sha256: 5028d3b19a8f0990d30fec9fbb07e32782bc5698e618fb1861aad8a9ccba4eb5
+  version: 1.0.1
+  sha256: 5b919c3bccb799b67a61866d0e617410a4fcdf173e2614440e59de2fa2003436
 shellcheck:
   description: >
     ShellCheck, a static analysis tool for shell scripts
@@ -374,8 +374,8 @@ starship:
 
   repo_url: https://github.com/starship/starship
   license: ICS
-  version: 1.26.0
-  sha256: 321f0dd7af8340a5f2e6a8fec6538a04f617486f9ec70d878f91c09cd8deef22
+  version: 1.27.0
+  sha256: 3b94758850901717eb36aa1b53f8492c1322506ec6d41273bc6151e79ed8e4a1
 task:
   description: >
     A task runner / build tool that aims to be simpler and easier to use than, for example, GNU Make.
@@ -396,8 +396,8 @@ terraform:
 
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
-  version: 1.16.5
-  sha256: 2bc2fcfff033265c9e02ca0351f01794eb122f62a9b2a49a3294b9e49eaab5e4
+  version: 1.16.6
+  sha256: 38034b38d03096399a7a1264a14561a8029b2b496fd1f169452656e53968f1b7
 terraform-docs:
   description: >
     Generate docs from terraform modules
