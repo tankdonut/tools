@@ -42,8 +42,8 @@ argocd:
 
   repo_url: https://github.com/argoproj/argo-cd
   license: APACHE-2.0
-  version: 3.5.6
-  sha256: db9d17b70593d3f86a4dcf08d9ebbb85a42e995426ac5f928b737260656102d3
+  version: 3.6.1
+  sha256: 46d2fc941071f0a0c36326a67a431d34b1479e1a24737f7b367abc93968beadc
 asdf:
   description: >
     Extendable version manager with support for Ruby, Node.js, Elixir, Erlang & more
@@ -63,8 +63,8 @@ bd:
 
   repo_url: https://github.com/steveyegge/beads
   license: MIT
-  version: 1.3.2
-  sha256: c6ea3281f6ff82628351b2d0967c9eb85862c8a0ec0ebc24e63e645c8b02462e
+  version: 1.3.4
+  sha256: 175c26904bde3ff9168d2282ff6b56f17b17f60c22fa5acb3dacc9fb3465303a
 codegraph:
   description: >
     Pre-indexed code knowledge graph for coding agents, auto-syncs on code changes, 100% local
@@ -98,8 +98,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.99.0
-  sha256: ec20f001028dfb7b6427225f0cf5215081275c8f09f45001a8535847cc4fd6ea
+  version: 0.100.0
+  sha256: 122d4afe0e3bb0fc4c571f58b0c08d485c8733f272e962a02064c2150cd7a152
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -142,8 +142,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 2.1.0
-  sha256: e9d0488c56cfe6369d3310a14e14b0a6cd71a37091503d016d28e31630ee3010
+  version: 2.3.0
+  sha256: 782f720843364bfe5e7eaffa561af7685987ec3658510faa64ec330c5ea87a3c
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -175,8 +175,8 @@ flyctl:
 
   repo_url: https://github.com/superfly/flyctl
   license: APACHE-2.0
-  version: 0.5.1
-  sha256: 47803bc5dc3eb7c7a45626ff76f0082e8c5b5fb8b805efbe00469d04757e1b1b
+  version: 0.5.5
+  sha256: 2c64e1c7f320fafed0452fbce9adff57fcaf733619f0faa315ae883ec03d7ef6
 golangci-lint:
   description: >
     Fast linters runner for Go
@@ -219,8 +219,8 @@ k3s:
 
   repo_url: https://github.com/k3s-io/k3s
   license: APACHE-2.0
-  version: 1.37.1+k3s1
-  sha256: 92b94582eb7b34a8cf532e6006842b9ed215a6783cf56a3dd6271fd35243b2c0
+  version: 1.37.2+k3s1
+  sha256: 265b3ee6a3198ef14033c63ef46cbb32370d83795199fb6d1b01f21575eddbda
 k9s:
   description: >
     🐶 Kubernetes CLI To Manage Your Clusters In Style!
@@ -296,8 +296,8 @@ pi:
 
   repo_url: https://github.com/earendil-works/pi
   license: MIT
-  version: 1.4.0
-  sha256: f2e4e4329603223d03260cdb8bd5033dbdc1f73ba58ab8939db2e56546e115d2
+  version: 1.5.0
+  sha256: df870ba0e344cb7b3358d8d8f19397b8b8d225a8669784736ad68a5c2169d53b
   package_dir: true
 rtk:
   description: >
