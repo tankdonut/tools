@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.11.1 (2026-11-21)
+
+### Additions
+
+- distrobox: 2.0.0-rc.4
+
 ## 2026.11.0 (2026-11-08)
 
 ### Upgrades
