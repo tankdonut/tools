@@ -144,6 +144,17 @@ doctl:
   license: APACHE-2.0
   version: 2.1.0
   sha256: e9d0488c56cfe6369d3310a14e14b0a6cd71a37091503d016d28e31630ee3010
+distrobox:
+  description: >
+    Tool that integrates any OCI/Podman/Docker container with the host Linux system
+
+  download_url: >
+    {{repo_url}}/releases/download/{{version}}/{{name}}-linux-{{arch}}.tar.gz
+
+  repo_url: https://github.com/89luca89/distrobox
+  license: GPL-3.0
+  version: 2.0.0-rc.4
+  sha256: 4dcd7d8eccdb562fd097384bfb35c1f453e0b54881fd8daf997f7ecb2616dac3
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
