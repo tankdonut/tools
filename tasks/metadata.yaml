@@ -98,8 +98,8 @@ crush:
 
   repo_url: https://github.com/charmbracelet/crush
   license: FSL-1.1-MIT
-  version: 0.100.0
-  sha256: 122d4afe0e3bb0fc4c571f58b0c08d485c8733f272e962a02064c2150cd7a152
+  version: 0.101.0
+  sha256: cf234948e3d7c5236d18a048a38f25a7df9ca24ba0b8fdaa525d45c5f705f99a
 ct:
   description: >
     Hosting Helm Charts via GitHub Pages and Releases
@@ -142,8 +142,8 @@ doctl:
 
   repo_url: https://github.com/digitalocean/doctl
   license: APACHE-2.0
-  version: 2.3.0
-  sha256: 782f720843364bfe5e7eaffa561af7685987ec3658510faa64ec330c5ea87a3c
+  version: 2.5.0
+  sha256: 4901eb107ea2efb59b172094117136bd983a653b6599e2aa51b7b72d7cd98f4c
 distrobox:
   description: >
     Tool that integrates any OCI/Podman/Docker container with the host Linux system
@@ -164,8 +164,8 @@ exo:
 
   repo_url: https://github.com/exoscale/cli
   license: APACHE-2.0
-  version: 1.103.2
-  sha256: 03f18148ab2eb73c8481b1b637691c1e598d73e6fe4c1b25354e8acbeae05694
+  version: 1.104.1
+  sha256: 79622e7c5b1594541704c6f34baf7a09da481ae5d7f79607df05b236617fa56d
 flux:
   description: >
     Open and extensible continuous delivery solution for Kubernetes. Powered by GitOps Toolkit.
@@ -186,8 +186,8 @@ flyctl:
 
   repo_url: https://github.com/superfly/flyctl
   license: APACHE-2.0
-  version: 0.5.5
-  sha256: 2c64e1c7f320fafed0452fbce9adff57fcaf733619f0faa315ae883ec03d7ef6
+  version: 0.5.10
+  sha256: 2f96f16e9ccaf273acb17ef39bd018de4fea8bf4ee905e85de93ca2a723b03fb
 golangci-lint:
   description: >
     Fast linters runner for Go
@@ -285,8 +285,8 @@ opencode:
 
   repo_url: https://github.com/anomalyco/opencode
   license: MIT
-  version: 1.19.5
-  sha256: 588310a336fa3b9df36b3f0225b26f679d453efaad0cf3d66c3651ef3ec1647a
+  version: 2.3.0
+  sha256: fc0f81522aceeabac47693d88389efa2bc517ce74c2c38fd6967819fcc6e4d3b
 packer:
   description: >
     Packer is a tool for creating identical machine images for multiple platforms from a single source configuration.
@@ -307,8 +307,8 @@ pi:
 
   repo_url: https://github.com/earendil-works/pi
   license: MIT
-  version: 1.5.0
-  sha256: df870ba0e344cb7b3358d8d8f19397b8b8d225a8669784736ad68a5c2169d53b
+  version: 1.5.2
+  sha256: 811c6f2c9e7aaee252b5404252e556fb713aa209c1f7f924226aa77d4ef70cb5
   package_dir: true
 rtk:
   description: >
@@ -407,8 +407,8 @@ terraform:
 
   repo_url: https://github.com/hashicorp/terraform
   license: Business Source License v1.1 https://www.hashicorp.com/bsl
-  version: 1.17.1
-  sha256: 4638628058e71a55212b1c563712eac03b902128f40740f3dc8174df12135061
+  version: 1.17.2
+  sha256: e6f16b2f0b137ee5729caa8c4e79a3bae4ee261acd198a1fcfa8584a6296605b
 terraform-docs:
   description: >
     Generate docs from terraform modules
@@ -418,8 +418,8 @@ terraform-docs:
 
   repo_url: https://github.com/segmentio/terraform-docs
   license: MIT
-  version: 0.24.0
-  sha256: 9005daf969de0b50134493a2c00078b49f5f5b39d021cda7c89bf4d4f3d776d3
+  version: 0.25.1
+  sha256: 246f1a3211c9dbbed4c4af82b856dbd40acda78816ac8cdb5203c2869b659c76
 terragrunt:
   description: >
     Terragrunt is a thin wrapper for Terraform that provides extra tools for working with multiple Terraform modules.
@@ -429,8 +429,8 @@ terragrunt:
 
   repo_url: https://github.com/gruntwork-io/terragrunt
   license: MIT
-  version: 1.2.1
-  sha256: f2f6238ad2348855a4e876b90fd31f3f5d106bb234794202a00b2bcc139fa753
+  version: 1.2.2
+  sha256: 1ba4ad11cf6ac277e8ba59a3fdceb8576778e22f6a24bedd542e91bad9f36491
 tflint:
   description: >
     A Pluggable Terraform Linter
@@ -440,8 +440,8 @@ tflint:
 
   repo_url: https://github.com/terraform-linters/tflint
   license: MPL 2.0
-  version: 0.65.0
-  sha256: d4c545ed2e29d6338604b586f34f544f380f70f243aa72f7b484713835eaec61
+  version: 0.66.0
+  sha256: 22be11cadc25cd02401e94c0ccc91aa63467debb8485c2a755d98f4c0a9d1e2e
 tilt:
   description: >
     Define your dev environment as code. For microservice apps on Kubernetes.
@@ -451,5 +451,5 @@ tilt:
 
   repo_url: https://github.com/tilt-dev/tilt
   license: APACHE-2.0
-  version: 0.37.8
-  sha256: e39513f958705d30524d55f68b1d46fbef2b46a0da568efd00e6383dee6be44f
+  version: 0.37.9
+  sha256: e70bb856b8e1cddb249b1e4231c1b1edca1f78167415effbdc9a1e893b6b9a19
