@@ -133,17 +133,6 @@ direnv:
   license: MIT
   version: 2.38.2
   sha256: 148820a187930d36ca6a204504e5cdb30d8396cd1a97e64c3b3f10d793c11247
-doctl:
-  description: >
-    A command line tool for DigitalOcean services
-
-  download_url: >
-    {{repo_url}}/releases/download/v{{version}}/{{name}}-{{version}}-{{os}}-{{arch}}.tar.gz
-
-  repo_url: https://github.com/digitalocean/doctl
-  license: APACHE-2.0
-  version: 2.5.0
-  sha256: 4901eb107ea2efb59b172094117136bd983a653b6599e2aa51b7b72d7cd98f4c
 distrobox:
   description: >
     Tool that integrates any OCI/Podman/Docker container with the host Linux system
@@ -155,6 +144,17 @@ distrobox:
   license: GPL-3.0
   version: 2.0.0-rc.4
   sha256: 4dcd7d8eccdb562fd097384bfb35c1f453e0b54881fd8daf997f7ecb2616dac3
+doctl:
+  description: >
+    A command line tool for DigitalOcean services
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}-{{version}}-{{os}}-{{arch}}.tar.gz
+
+  repo_url: https://github.com/digitalocean/doctl
+  license: APACHE-2.0
+  version: 2.5.0
+  sha256: 4901eb107ea2efb59b172094117136bd983a653b6599e2aa51b7b72d7cd98f4c
 exo:
   description: >
     Command-line tool for everything at Exoscale: compute, storage, dns.
@@ -243,6 +243,17 @@ k9s:
   license: APACHE-2.0
   version: 0.51.0
   sha256: c3752ad51a5a4015a113819c4eeb6e55a4d0e4b8e652494797532f6fc8161dd7
+kagent:
+  description: >
+    Cloud Native Agentic AI - Kubernetes-native multi-agent framework
+
+  download_url: >
+    {{repo_url}}/releases/download/v{{version}}/{{name}}-{{os}}-{{arch}}
+
+  repo_url: https://github.com/kagent-dev/kagent
+  license: Apache-2.0
+  version: 1.0.1
+  sha256: f188182aaf445e5707ab8d3458f394fa30f875cc1786ec4f12a30b9fa0a8d77f
 kind:
   description: >
     A tool for running local Kubernetes clusters using Docker
