@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026.11.4 (2026-11-24)
+
+### Upgrades
+
+- doctl: 2.5.0 → 2.5.0
+
+### Additions
+
+- kagent: 1.0.1
+
 ## 2026.11.3 (2026-11-23)
 
 ### Upgrades
